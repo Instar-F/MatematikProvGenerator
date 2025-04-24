@@ -1,5 +1,6 @@
 <?php
-$content = $_POST['question'] ?? '';
+$question = $_POST['question'] ?? '';
+$answer = $_POST['answer'] ?? '';
 ?>
 
 <!DOCTYPE html>
@@ -31,8 +32,13 @@ $content = $_POST['question'] ?? '';
 <body>
 
   <h1>Förhandsgranskning</h1>
+  
   <div class="preview">
-    <?= $content ?>
+    <h3>Fråga:</h3>
+    <div><?= $question ?></div>
+    <br>
+    <h3>Svar:</h3>
+    <div><?= $answer ?></div>
   </div>
 
   <script>
