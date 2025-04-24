@@ -3,8 +3,7 @@ require_once "include/header.php";
 $content = $_POST['question'] ?? '';
 ?>
 
-<!DOCTYPE html>
-<html lang="sv">
+
 <head>
   <meta charset="UTF-8">
   <title>Förhandsgranskning</title>
@@ -15,7 +14,6 @@ $content = $_POST['question'] ?? '';
   <style>
   </style>
 </head>
-<body>
 
   <h1>Förhandsgranskning</h1>
   <div class="preview">
@@ -26,8 +24,6 @@ $content = $_POST['question'] ?? '';
     MathJax.typeset(); // Renders math expressions after load
   </script>
 
-</body>
-</html>
 
 <?php
 require_once "include/footer.php";
