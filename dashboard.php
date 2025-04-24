@@ -37,26 +37,24 @@ if (!$result) {
                             </a>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <a href="test-list.php" class="btn btn-outline-warning btn-lg w-100">
+                                <i class="bi bi-people"></i> Test list
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="generate-test.php" class="btn btn-outline-primary btn-lg w-100">
+                                <i class="bi bi-person-plus"></i> generate-test
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="assignments.php" class="btn btn-outline-success btn-lg w-100">
+                                <i class="bi bi-question-circle"></i> Assignments
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <a href="user-management.php" class="btn btn-outline-warning btn-lg w-100">
                                 <i class="bi bi-people"></i> User Management
                             </a>
-                        </div>
-
-                        <!-- Placeholder Links -->
-                        <div class="col-md-6 mb-3">
-                            <button class="btn btn-outline-secondary btn-lg w-100" disabled>
-                                <i class="bi bi-list"></i> Test List (Coming Soon)
-                            </button>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <button class="btn btn-outline-secondary btn-lg w-100" disabled>
-                                <i class="bi bi-gear"></i> Generate Test (Coming Soon)
-                            </button>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <button class="btn btn-outline-secondary btn-lg w-100" disabled>
-                                <i class="bi bi-book"></i> Courses (Coming Soon)
-                            </button>
                         </div>
                     </div>
                 </div>

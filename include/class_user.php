@@ -244,6 +244,30 @@ public function deleteUser($userId) {
         ];
     }
 }
+
+public function searchTests($testName){	
+    try {
+    // Prepare the SQL statement
+    $stmt = $this->pdo->prepare("
+			SELECT ex_id, ex_name, created_at, u_uname
+			FROM exams INNER JOIN users
+            ON exams.ex_createdby_fk = users.u_id
+        WHERE ex_name LIKE ?");
+    $stmt->execute(["%" . $testName . "%"]);
+
+    // Fetch user data
+    $testList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($testList) {
+        return ['success' => true, 'data' => $testList];
+    } else {
+        return ['success' => false, 'error' => 'Test not found.'];
+    }
+} catch (Exception $e) {
+    return ['success' => false, 'error' => 'Database error: ' . $e->getMessage()];
+}
+    
+}
 	
 	
 	/*public function displayUser() {
