@@ -13,8 +13,8 @@ require_once "include/header.php";
 		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/152x152.png" sizes="152x152">
 		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/167x167.png" sizes="167x167">
 		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/180x180.png" sizes="180x180">
-		<link rel="stylesheet" href="./style.css">
-		<link rel="stylesheet" href="./ckeditor5/ckeditor5.css">
+		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="ckeditor5/ckeditor5.css">
 
 
   <!-- MathJax -->
