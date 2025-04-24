@@ -1,4 +1,5 @@
 <?php
+require_once "include/header.php";
 $content = $_POST['question'] ?? '';
 ?>
 
@@ -12,20 +13,6 @@ $content = $_POST['question'] ?? '';
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 2rem;
-    }
-    .preview {
-      padding: 1rem;
-      border: 1px solid #ccc;
-      background: #f9f9f9;
-    }
-    img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
   </style>
 </head>
 <body>
@@ -41,3 +28,7 @@ $content = $_POST['question'] ?? '';
 
 </body>
 </html>
+
+<?php
+require_once "include/footer.php";
+?>	
