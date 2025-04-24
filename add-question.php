@@ -2,7 +2,26 @@
 require_once "include/header.php";
 ?>	
 
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>CKEditor 5 Sample</title>
+		<link rel="icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/32x32.png" sizes="32x32">
+		<link rel="icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/96x96.png" sizes="96x96">
+		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/120x120.png" sizes="120x120">
+		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/152x152.png" sizes="152x152">
+		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/167x167.png" sizes="167x167">
+		<link rel="apple-touch-icon" type="image/png" href="https://ckeditor.com/assets/images/favicons/180x180.png" sizes="180x180">
+		<link rel="stylesheet" href="./style.css">
+		<link rel="stylesheet" href="./ckeditor5/ckeditor5.css">
 
+
+  <!-- MathJax -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>	
+
+	</head>
+	<body>
 	<h1>Matematisk Frågeredigerare</h1>
   <form method="post" action="preview.php">
     <textarea name="question" id="editor"></textarea>
@@ -32,7 +51,7 @@ require_once "include/header.php";
 				}
 			};
 		</script>
-
+		
 <?php
 require_once "include/footer.php";
 ?>	
