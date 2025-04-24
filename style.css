@@ -1,25 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-
+/* Print Media Queries */
 @media print {
-	body {
-		margin: 0 !important;
-	}
+    body {
+        margin: 0 !important;
+    }
 }
 
+/* General Layout */
 .main-container {
-	font-family: 'Lato';
-	width: fit-content;
-	margin-left: auto;
-	margin-right: auto;
+    font-family: 'Lato', sans-serif;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
+/* CKEditor Content */
 .ck-content {
-	font-family: 'Lato';
-	line-height: 1.6;
-	word-break: break-word;
+    font-family: 'Lato', sans-serif;
+    line-height: 1.6;
+    word-break: break-word;
 }
 
 .editor-container_classic-editor .editor-container__editor {
-	min-width: 795px;
-	max-width: 795px;
+    min-width: 795px;
+    max-width: 795px;
+}
+
+/* Footer Styling */
+.footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #e0040e;
+    text-align: center;
+}
+
+footer p {
+    font-size: 1em;
+    margin: 0;
+}
+
+footer a {
+    font-size: 1em;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+/* Navbar Branding */
+.navbar-brand {
+    font-size: 2em;
+}
+
+/* Preview Section */
+.preview {
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+}
+
+/* Image Styling */
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
