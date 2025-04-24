@@ -1,8 +1,19 @@
 <?php
 require_once "include/header.php";
 
+if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+    header("Location: login.php");
+}
+
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 900);
+
+if (!$result) {
+    echo "You do not have the rights to access this page.";
+    exit(); // Stop the script from continuing
+}
+
 $userList["data"] = $pdo->query("
-			SELECT u_id, u_name, u_fname, u_lname, u_email, r_name 
+			SELECT u_id, u_uname, u_mail, r_name 
 			FROM users 
 			INNER JOIN roles 
 			ON users.u_role_fk = roles.r_id
@@ -45,11 +56,11 @@ if(isset($_POST['searchuser-submit'])){
 	<div class="row">
 		<div class="container mt-4">
 			<div class="row fw-bold border-bottom pb-2 mb-2">
-				<div class="col">Username</div>
-				<div class="col">First Name</div>
-				<div class="col">Last Name</div>
-				<div class="col">Email</div>
-				<div class="col">Role</div>
+				<div class="col-3">Username</div>
+				<div class="col-3">Email</div>
+				<div class="col-3">Role</div>
+				<div class="col-3">Management</div>
+
 			</div>
 	
 
@@ -57,10 +68,8 @@ if(isset($_POST['searchuser-submit'])){
 	if(!empty($userList["data"])):
 	foreach ($userList["data"] as $userRow): ?>
         <div class="row mb-2">
-            <div class="col"><a href="edit-user.php?uid=<?= htmlspecialchars($userRow['u_id']) ?>"><?= htmlspecialchars($userRow['u_name']) ?></a></div>
-            <div class="col"><?= htmlspecialchars($userRow['u_fname']) ?></div>
-            <div class="col"><?= htmlspecialchars($userRow['u_lname']) ?></div>
-            <div class="col"><?= htmlspecialchars($userRow['u_email']) ?></div>
+            <div class="col"><?= htmlspecialchars($userRow['u_uname']) ?></div>
+            <div class="col"><?= htmlspecialchars($userRow['u_mail']) ?></div>
             <div class="col"><?= htmlspecialchars($userRow['r_name']) ?></div>
             <div class="col"><a href="edit-user.php?uid=<?= htmlspecialchars($userRow['u_id']) ?>">Edit</a></div>
         </div>
