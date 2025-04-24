@@ -1,6 +1,35 @@
 <?php
-require_once "include/header.php";
-?>	
+require_once "include/header.php";  // Assuming this already includes config.php
+
+// Retrieve categories and question types from the database
+$stmt = $pdo->query("SELECT ca_id, ca_name FROM categories");
+$categories = $stmt->fetchAll();
+
+$stmt = $pdo->query("SELECT qt_id, qt_name FROM questiontypes");
+$questionTypes = $stmt->fetchAll();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Sanitize and validate inputs
+    $question = $_POST['question'] ?? '';
+    $answer = $_POST['answer'] ?? '';
+    $ca_id = $_POST['ca_id'] ?? '';
+    $qt_id = $_POST['qt_id'] ?? '';
+
+    if (!empty($question) && !empty($answer) && !empty($ca_id) && !empty($qt_id)) {
+        try {
+            // Insert the question and answer into the database
+            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, qt_id, text, svar) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$ca_id, $qt_id, $question, $answer]);
+
+            echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
+        } catch (Exception $e) {
+            echo "<p class='alert alert-danger'>Fel vid spara: " . $e->getMessage() . "</p>";
+        }
+    } else {
+        echo "<p class='alert alert-warning'>Fyll i alla fält korrekt.</p>";
+    }
+}
+?>  
 
 <!doctype html>
 <html lang="en">
@@ -23,17 +52,41 @@ require_once "include/header.php";
 	</head>
 	<body>
 	<h1>Matematisk Frågeredigerare</h1>
-  <form method="post" action="preview.php">
-    <textarea name="question" id="editor"></textarea>
-    <br>
-    <input type="submit" value="Förhandsgranska">
-  </form>
+	<form method="post" action="preview.php" id="questionForm">
+    <div class="form-group">
+        <label for="category">Kategori:</label>
+        <select name="ca_id" id="category" class="form-control">
+            <option value="">Välj en kategori</option>
+            <?php foreach ($categories as $category): ?>
+                <option value="<?= $category['ca_id']; ?>"><?= htmlspecialchars($category['ca_name']); ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 
-		<div class="main-container">
-			<div class="editor-container editor-container_classic-editor" id="editor-container">
-				<div class="editor-container__editor"><div id="editor"></div></div>
-			</div>
-		</div>
+    <div class="form-group">
+        <label for="questiontype">Frågetyp:</label>
+        <select name="qt_id" id="questiontype" class="form-control">
+            <option value="">Välj en frågetyp</option>
+            <?php foreach ($questionTypes as $questionType): ?>
+                <option value="<?= $questionType['qt_id']; ?>"><?= htmlspecialchars($questionType['qt_name']); ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="question">Fråga:</label>
+        <textarea name="question" id="question"></textarea>
+    </div>
+
+    <div class="form-group">
+        <label for="answer">Svar:</label>
+        <textarea name="answer" id="answer"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Förhandsgranska</button>
+</form>
+
+    </div>	
 		<script type="importmap">
 		{
 			"imports": {
