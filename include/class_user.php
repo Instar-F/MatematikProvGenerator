@@ -186,7 +186,7 @@ class User {
 	public function selectUserInfo($userId) {
     try {
         // Prepare the SQL statement
-        $stmt = $this->pdo->prepare("SELECT u_id, u_name, u_mail, u_role_fk FROM users WHERE u_id = ?");
+        $stmt = $this->pdo->prepare("SELECT u_id, u_uname, u_mail, u_role_fk FROM users WHERE u_id = ?");
         $stmt->execute([$userId]);
 
         // Fetch user data
@@ -207,11 +207,11 @@ class User {
 		try {
         // Prepare the SQL statement
         $stmt = $this->pdo->prepare("
-			SELECT u_id, u_name, u_fname, u_lname, u_email, r_name 
+			SELECT u_id, u_uname, u_mail, r_name 
 			FROM users 
 			INNER JOIN roles 
 			ON users.u_role_fk = roles.r_id
-			WHERE u_name LIKE ?");
+			WHERE u_uname LIKE ?");
 		$stmt->execute(["%" . $userName . "%"]);
 
         // Fetch user data

@@ -1,10 +1,21 @@
 <?php
 require_once "include/header.php";
 
+if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+    header("Location: login.php");
+}
+
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 900);
+
+if (!$result) {
+    echo "You do not have the rights to access this page.";
+    exit(); // Stop the script from continuing
+}	
+
 if(isset($_GET['uid'])){
 	$userId = $_GET['uid'];
 	$currentUserInfo = $user_obj->selectUserInfo($userId);
-	print_r($currentUserInfo);
+	//print_r($currentUserInfo);
 }
 
 if(isset($_POST['confirm']) && $_POST['confirm'] === "delete"){
@@ -27,7 +38,7 @@ if(isset($_POST['confirm']) && $_POST['confirm'] === "back"){
 <div class="container mt-2">
     <div class="row">
 	<?php if (!isset($userFeedback) && !empty($currentUserInfo['data']['u_id'])):?>
-		<h2>Are you sure you want to delete <?= $currentUserInfo['data']['u_name']?></h2>
+		<h2>Are you sure you want to delete <?= $currentUserInfo['data']['u_uname']?></h2>
 		<form action="" method="post">
 			<button type="submit" class="btn btn-danger" name="confirm" value="delete">Delete</button>
 			<button type="submit" class="btn btn-primary" name="confirm" value="back">Back</button>

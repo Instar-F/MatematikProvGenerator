@@ -8,7 +8,11 @@ if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
 
 $result = $user_obj->checkUserRole($_SESSION['user']['role'], 900);
 
-print_r($result);
+if (!$result) {
+    echo "You do not have the rights to access this page.";
+    exit(); // Stop the script from continuing
+}
+
 
 
 

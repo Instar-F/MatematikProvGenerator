@@ -1,6 +1,17 @@
 <?php
 require_once "include/header.php";
 
+if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+    header("Location: login.php");
+}
+
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 900);
+
+if (!$result) {
+    echo "You do not have the rights to access this page.";
+    exit(); // Stop the script from continuing
+}
+
 $allUserRoles = $pdo->query("SELECT * FROM roles")->fetchAll();
 
 if(isset($_GET['uid'])){
@@ -8,7 +19,7 @@ if(isset($_GET['uid'])){
 	$currentUserInfo = $user_obj->selectUserInfo($userId);
 	//print_r($currentUserInfo);
 }
-print_r($currentUserInfo);
+//print_r($currentUserInfo);
 
 
 if(isset($_POST['deleteuser-submit'])){
@@ -19,8 +30,6 @@ if(isset($_POST['edituser-submit'])){
 	echo "<h2>Form submitted</h2>";
 	
 	$uname = cleanInput($_POST["uname"]);
-	$ufname = cleanInput($_POST["ufname"]);
-	$ulname = cleanInput($_POST["ulname"]);
 	$umail = trim($_POST["umail"]);
 	$upass = $_POST["upass"];
 	$upassrpt = $_POST["upassrpt"];
@@ -32,7 +41,7 @@ if(isset($_POST['edituser-submit'])){
 		echo "Error: " . $result['error'];
 	} 
 	else {
-		$result = $user_obj->editUser($userId, $uname, $ufname, $ulname, $umail, $upass, $urole);
+		$result = $user_obj->editUser($userId, $uname, $umail, $upass, $urole);
 		if (!$result['success']) {
 			echo "Error: " . $result['error'];
 		} 
@@ -53,22 +62,11 @@ if(isset($_POST['edituser-submit'])){
                     
                     <div class="mb-3">
                         <label for="uname" class="form-label">Username:</label>
-                        <input type="text" value="<?php echo $currentUserInfo['data']['u_name']; ?>" id="uname" name="uname" class="form-control" required>
+                        <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="ufname" class="form-label">First Name:</label>
-                        <input type="text" value="<?php echo $currentUserInfo['data']['u_fname']; ?>" id="ufname" name="ufname" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="ulname" class="form-label">Last Name:</label>
-                        <input type="text" value="<?php echo $currentUserInfo['data']['u_lname']; ?>" id="ulname" name="ulname" class="form-control" required>
-                    </div>
-
                     <div class="mb-3">
                         <label for="umail" class="form-label">Email:</label>
-                        <input type="email" value="<?php echo $currentUserInfo['data']['u_email']; ?>" id="umail" name="umail" class="form-control" required>
+                        <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
                     </div>
 
                     <div class="mb-3">
