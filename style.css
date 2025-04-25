@@ -5,6 +5,13 @@
     }
 }
 
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Lato', sans-serif;
+    background-color: #f4f4f4;
+}
+
 /* General Layout */
 .main-container {
     font-family: 'Lato', sans-serif;
@@ -27,7 +34,7 @@
 
 /* Footer Styling */
 .footer {
-    position: fixed;
+    margin-top: 20px;
     left: 0;
     bottom: 0;
     width: 100%;
