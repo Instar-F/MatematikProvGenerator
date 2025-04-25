@@ -32,16 +32,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     }
 }
 ?>  
-
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>CKEditor 5 Sample</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="ckeditor5/ckeditor5.css">
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>	
-</head>
 <body>
     <h1>Matematisk Frågeredigerare</h1>
 
