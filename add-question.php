@@ -20,8 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
     if (!empty($question) && !empty($answer) && !empty($ca_id) && !empty($qt_id) && is_numeric($total_points)) {
         try {
             // Insert the question and answer into the database
-            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, qt_id, text, answer, total_points) VALUES (?, ?, ?, ?, ?)");
-            $stmt->execute([$ca_id, $qt_id, $question, $answer, $total_points]);
+            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, qt_id, text, answer, total_points, teacher_fk) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$ca_id, $qt_id, $question, $answer, $total_points, $_SESSION['user']['id']]);
 
             echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
         } catch (Exception $e) {
