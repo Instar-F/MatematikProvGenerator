@@ -1,101 +1,96 @@
 <?php
 require_once "include/header.php";
 
-if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+if (!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
     header("Location: login.php");
+    exit();
 }
 
 $result = $user_obj->checkUserRole($_SESSION['user']['role'], 100);
 
 if (!$result) {
     echo "You do not have the rights to access this page.";
-    exit(); // Stop the script from continuing
+    exit();
 }
 
-$allUserRoles = $pdo->query("SELECT * FROM roles")->fetchAll();
+// Check if test ID is passed
+if (isset($_GET['exid'])) {
+    $testId = (int)$_GET['exid'];
 
-if(isset($_GET['uid'])){
-	$userId = $_GET['uid'];
-	$currentUserInfo = $user_obj->selectUserInfo($userId);
-	//print_r($currentUserInfo);
-}
-//print_r($currentUserInfo);
+    // Fetch test details
+    $testDetails = $pdo->prepare("
+        SELECT ex_name, created_at, u_uname 
+        FROM matteprovgenerator.exams 
+        INNER JOIN matteprovgenerator.users ON matteprovgenerator.exams.ex_createdby_fk = matteprovgenerator.users.u_id 
+        WHERE ex_id = :testId
+    ");
+    $testDetails->execute(['testId' => $testId]);
+    $test = $testDetails->fetch(PDO::FETCH_ASSOC);
 
+    // Fetch questions for the test (through exam_questions table)
+    $questionsQuery = $pdo->prepare("
+        SELECT q.text 
+        FROM matteprovgenerator.exam_questions eq
+        INNER JOIN matteprovgenerator.questions q ON eq.qu_id = q.qu_id
+        WHERE eq.ex_id = :testId
+        ORDER BY eq.question_order ASC
+    ");
+    $questionsQuery->execute(['testId' => $testId]);
+    $questions = $questionsQuery->fetchAll(PDO::FETCH_ASSOC);
 
-if(isset($_POST['deleteuser-submit'])){
-	header("Location: delete-user.php?uid={$userId}");
-}
-
-if(isset($_POST['edituser-submit'])){
-	echo "<h2>Form submitted</h2>";
-	
-	$uname = cleanInput($_POST["uname"]);
-	$umail = trim($_POST["umail"]);
-	$upass = $_POST["upass"];
-	$upassrpt = $_POST["upassrpt"];
-	$urole = cleanInput($_POST["urole"]);
-	
-	$result = $user_obj->checkUserRegisterInfo($uname, $umail, $upass, $upassrpt, "edit", $userId);
-
-	if (!$result['success']) {
-		echo "Error: " . $result['error'];
-	} 
-	else {
-		$result = $user_obj->editUser($userId, $uname, $umail, $upass, $urole);
-		if (!$result['success']) {
-			echo "Error: " . $result['error'];
-		} 
-		else {
-			echo "User Edited";
-		}
-	}
+} else {
+    echo "No test selected.";
+    exit();
 }
 ?>
 
-
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-8">
             <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Test</h2>
-                <form action="" method="POST" class="mb-4">
-                    
-                    <div class="mb-3">
-                        <label for="uname" class="form-label">Username:</label>
-                        <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="umail" class="form-label">Email:</label>
-                        <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
-                    </div>
+                <h2 class="text-center mb-4">Test Details</h2>
 
+                <?php if ($test): ?>
                     <div class="mb-3">
-                        <label for="upass" class="form-label">Password:</label>
-                        <input type="password" id="upass" name="upass" class="form-control">
+                        <h4>Test Name:</h4>
+                        <p><?= htmlspecialchars($test['ex_name']) ?></p>
                     </div>
-
                     <div class="mb-3">
-                        <label for="upassrpt" class="form-label">Repeat Password:</label>
-                        <input type="password" id="upassrpt" name="upassrpt" class="form-control">
+                        <h4>Created By:</h4>
+                        <p><?= htmlspecialchars($test['u_uname']) ?></p>
                     </div>
-
                     <div class="mb-3">
-                        <label for="upassrpt" class="form-label">Repeat Password:</label>
-                        <input type="password" id="upassrpt" name="upassrpt" class="form-control">
+                        <h4>Created At:</h4>
+                        <p><?= htmlspecialchars($test['created_at']) ?></p>
                     </div>
-
-                    <div class="d-grid">
-                        <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
+                <?php else: ?>
+                    <div class="alert alert-danger text-center">
+                        Test not found.
                     </div>
-
-                </form> 
-                <form action="" method="POST">
-                    <div class="d-grid">
-                        <button type="submit" name="deleteuser-submit" class="btn btn-danger">Delete</button>
-                    </div>
-                </form>
+                <?php endif; ?>
             </div>
+        </div>
     </div>
 
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-lg p-4">
+                <h3 class="text-center mb-4">Questions</h3>
+
+                <?php if (!empty($questions)): ?>
+                    <ul class="list-group">
+                        <?php foreach ($questions as $question): ?>
+                            <li class="list-group-item">
+                                <?= htmlspecialchars($question['text']) ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php else: ?>
+                    <div class="alert alert-warning text-center">
+                        No questions found for this test.
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 </div>
