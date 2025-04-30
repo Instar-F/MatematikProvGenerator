@@ -72,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
         </div>
 
         <!-- Buttons -->
-        <button type="submit" name="preview" formaction="preview.php" class="btn btn-primary">Förhandsgranska</button>
-        <button type="submit" name="save" class="btn btn-success">Spara till databas</button>
+        <button type="submit" name="preview" formaction="preview.php" class="btn btn-primary mt-4">Förhandsgranska</button>
+        <button type="submit" name="save" class="btn btn-success mt-4">Spara till databas</button>
     </form>
 
     <script type="importmap">
