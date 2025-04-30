@@ -37,12 +37,12 @@ if (!$result) {
                         </div>
                         <div class="col-md-6 mb-3">
                             <a href="test-list.php" class="btn btn-outline-warning btn-lg w-100">
-                                <i class="bi bi-people"></i> Test list
+                                <i class="bi bi-people"></i> Test List
                             </a>
                         </div>
                         <div class="col-md-6 mb-3">
                             <a href="generate-test.php" class="btn btn-outline-primary btn-lg w-100">
-                                <i class="bi bi-person-plus"></i> Generate test
+                                <i class="bi bi-person-plus"></i> Generate Test
                             </a>
                         </div>
                         <div class="col-md-6 mb-3">
