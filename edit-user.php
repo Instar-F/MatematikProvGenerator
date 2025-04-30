@@ -12,14 +12,14 @@ if (!$result) {
     exit(); // Stop the script from continuing
 }
 
-$allUserRoles = $pdo->query("SELECT * FROM roles")->fetchAll();
+$stmt = $pdo->prepare("SELECT * FROM roles WHERE r_level <= :userRole");
+$stmt->execute(['userRole' => $_SESSION['user']['role']]);
+$allUserRoles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if(isset($_GET['uid'])){
 	$userId = $_GET['uid'];
 	$currentUserInfo = $user_obj->selectUserInfo($userId);
-	//print_r($currentUserInfo);
 }
-//print_r($currentUserInfo);
 
 
 if(isset($_POST['deleteuser-submit'])){

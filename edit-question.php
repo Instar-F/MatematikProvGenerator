@@ -1,7 +1,8 @@
 <?php
 require_once "include/header.php";
 
-if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+// Check user authentication and role
+if (!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
     header("Location: login.php");
 }
 
@@ -11,12 +12,13 @@ if (!$result) {
     exit();
 }
 
+// Get the question ID from URL
 $questionId = isset($_GET['id']) ? (int)$_GET['id'] : null;
 if (!$questionId) {
     die('Invalid question ID.');
 }
 
-// Fetch the existing question data
+// Fetch the question
 $stmt = $pdo->prepare("SELECT * FROM matteprovgenerator.questions WHERE qu_id = ?");
 $stmt->execute([$questionId]);
 $question = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -89,7 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="number" name="total_points" id="total_points" class="form-control" min="0" step="1" value="<?= htmlspecialchars($question['total_points']); ?>" required>
         </div>
 
-        <!-- Optional: Hidden fields for redirect -->
         <input type="hidden" name="course_id" value="<?= $_GET['course_id'] ?? 0 ?>">
 
         <button type="submit" class="btn btn-success">Spara ändringar</button>

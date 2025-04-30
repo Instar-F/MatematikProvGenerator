@@ -16,8 +16,7 @@ if (!$result) {
 <div class="container mt-5">
     <div class="row">
         <div class="col-12 text-center mb-2">
-            <h1 class="display-4">Admin Dashboard</h1>
-            <p class="lead">Manage the system using the options below.</p>
+            <h1 class="display-4">Dashboard</h1>
         </div>
     </div>
     <div class="row justify-content-center">
@@ -43,7 +42,7 @@ if (!$result) {
                         </div>
                         <div class="col-md-6 mb-3">
                             <a href="generate-test.php" class="btn btn-outline-primary btn-lg w-100">
-                                <i class="bi bi-person-plus"></i> generate-test
+                                <i class="bi bi-person-plus"></i> Generate test
                             </a>
                         </div>
                         <div class="col-md-6 mb-3">
