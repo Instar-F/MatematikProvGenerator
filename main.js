@@ -143,8 +143,6 @@ const editorConfig = {
 			}
 		]
 	},
-	initialData:
-		'<h2>Hi<h2>',
 	licenseKey: LICENSE_KEY,
 	link: {
 		addTargetToExternalLinks: true,
