@@ -27,19 +27,11 @@ if(isset($_GET['logout']) && $_GET['logout'] == "true"){
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark py-4" style="background-color: #e0040e;">
         <div class="container">
-            <a class="navbar-brand" href="dashboard.php" style="font-size: 2em;">Axxell Ab</a>
+            <a class="navbar-brand" href="index.php" style="font-size: 2em;">Axxell Ab</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/contact">Contact</a>
-                    </li>
-                </ul>
-
                 <?php if ((isset($_SESSION['user']['id'])) && $user_obj->checkLoginStatus($_SESSION['user']['id'])): ?>
                 <form action="" class="d-flex" method="get" role="search">
                     <button class="btn btn-outline-light" name="logout" value="true" type="submit">Log out</button>

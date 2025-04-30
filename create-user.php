@@ -1,54 +1,40 @@
 <?php
 require_once "include/header.php";
 
-
-if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+if (!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
     header("Location: login.php");
+    exit();
 }
 
-$result = $user_obj->checkUserRole($_SESSION['user']['role'], 900);
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 100);
 
 if (!$result) {
     echo "You do not have the rights to access this page.";
     exit(); // Stop the script from continuing
 }
+//made it so that only users with a role lower than the one they are creating can be created.
+// Get all user roles that are less than or equal to the current user's role
+$stmt = $pdo->prepare("SELECT * FROM roles WHERE r_level <= :userRole");
+$stmt->execute(['userRole' => $_SESSION['user']['role']]);
+$allUserRoles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Get the role ID of the currently logged-in user
+$currentUserRole = $_SESSION['user']['role'];
 
-
-
-
-$allUserRoles = $pdo->query("SELECT * FROM roles")->fetchAll();
-
-if(isset($_POST['register-submit'])){
-	echo "<h2>Form submitted</h2>";
-	
-	$uname = cleanInput($_POST["uname"]);
-	$umail = trim($_POST["umail"]);
-	$upass = $_POST["upass"];
-	$upassrpt = $_POST["upassrpt"];
-	$urole = cleanInput($_POST["urole"]);
-	
-	$result = $user_obj->checkUserRegisterInfo($uname, $umail, $upass, $upassrpt, "create");
-
-	if (!$result['success']) {
-		echo "Error: " . $result['error'];
-	} 
-	else {
-		$result = $user_obj->createUser($uname, $umail, $upass, $urole);
-		if (!$result['success']) {
-			echo "Error: " . $result['error'];
-		} 
-		else {
-			echo "User created";
-		}
-	}
+if (isset($_POST['register-submit'])) {
+    $uname = cleanInput($_POST["uname"]);
+    $umail = trim($_POST["umail"]);
+    $upass = $_POST["upass"];
+    $upassrpt = $_POST["upassrpt"];
+    $urole = cleanInput($_POST["urole"]);
 }
 ?>
+
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Register</h2>
+                <h2 class="text-center mb-4">Create new user</h2>
                 <form action="" method="POST">
                     
                     <div class="mb-3">
@@ -74,10 +60,10 @@ if(isset($_POST['register-submit'])){
                         <label for="urole" class="form-label">User Role:</label>
                         <select id="urole" name="urole" class="form-select" required>
                             <?php
-							foreach($allUserRoles as $role){
-								echo "<option value='{$role['r_id']}'>{$role['r_name']}</option>";
-							}
-							?>
+                            foreach ($allUserRoles as $role) {
+                                echo "<option value='{$role['r_id']}'>{$role['r_name']}</option>";
+                            }
+                            ?>
                         </select>
                     </div>
 
