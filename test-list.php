@@ -52,31 +52,35 @@ if(isset($_POST['searchuser-submit'])){
             </div>
         </div>
     </div>
-	<div class="row">
-		<div class="container mt-4">
-			<div class="row fw-bold border-bottom pb-2 mb-2">
-				<div class="col-3">Name</div>
-				<div class="col-3">Created by</div>
-				<div class="col-3">Timestamp</div>
-				<div class="col-3">Management</div>
-
-			</div>
-	
-
-    <?php 
-	if(!empty($testList["data"])):
-	foreach ($testList["data"] as $userRow): ?>
-        <div class="row mb-2">
-            <div class="col"><?= htmlspecialchars($userRow['ex_name']) ?></div>
-            <div class="col"><?= htmlspecialchars($userRow['u_uname']) ?></div>
-            <div class="col"><?= htmlspecialchars($userRow['created_at']) ?></div>
-            <div class="col"><a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>">Show</a></div>
-    <?php
-	endforeach; 
-	else:
-		  echo "<div class='col text-center'>No result</div>";
-	endif;
-	?>
-		</div>
-	</div>
+    <div class="container mt-4">
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Created By</th>
+                <th>Timestamp</th>
+                <th>Management</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php 
+            if (!empty($testList["data"])):
+                foreach ($testList["data"] as $userRow): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($userRow['ex_name']) ?></td>
+                        <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
+                        <td><?= htmlspecialchars($userRow['created_at']) ?></td>
+                        <td><a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-primary btn-sm">Show</a></td>
+                    </tr>
+                <?php endforeach; 
+            else: ?>
+                <tr>
+                    <td colspan="4" class="text-center">No results found</td>
+                </tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+</div>
+</div>
+</div>
 </div>
