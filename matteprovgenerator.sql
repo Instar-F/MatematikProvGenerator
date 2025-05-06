@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 25, 2025 at 08:06 AM
+-- Generation Time: May 06, 2025 at 08:17 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -121,7 +121,31 @@ CREATE TABLE `exams` (
 INSERT INTO `exams` (`ex_id`, `ex_name`, `created_at`, `ex_createdby_fk`) VALUES
 (1, 'Matematik 1 - Exam', '2025-04-24 09:30:00', 1),
 (2, 'Ekonomi - Exam', '2025-04-24 09:35:00', 1),
-(3, 'Finska - Exam', '2025-04-24 09:40:00', 2);
+(3, 'Finska - Exam', '2025-04-24 09:40:00', 2),
+(4, 'Matte 123', '2025-04-30 09:35:42', 2),
+(5, 'awfdv', '2025-04-30 10:51:25', 3),
+(6, 'qefwvs', '2025-04-30 10:51:48', 3),
+(7, 'qefcd', '2025-04-30 11:21:34', 3),
+(8, 'efdcs', '2025-04-30 11:21:37', 3),
+(9, 'Generated Exam - 2025-04-30 12:10:37', '2025-04-30 13:10:37', 1),
+(10, 'Generated Exam - 2025-04-30 12:11:42', '2025-04-30 13:11:42', 1),
+(11, 'Generated Exam - 2025-04-30 12:36:09', '2025-04-30 13:36:09', 1),
+(12, 'Generated Exam - 2025-04-30 12:38:49', '2025-04-30 13:38:49', 1),
+(13, 'Generated Exam - 2025-04-30 12:46:44', '2025-04-30 13:46:44', 1),
+(14, 'Generated Exam - 2025-04-30 12:48:09', '2025-04-30 13:48:09', 1),
+(15, 'Generated Exam - 2025-04-30 12:48:24', '2025-04-30 13:48:24', 1),
+(16, 'Generated Exam - 2025-04-30 12:49:46', '2025-04-30 13:49:46', 1),
+(17, 'Generated Exam - 2025-04-30 12:49:55', '2025-04-30 13:49:55', 1),
+(18, 'Generated Exam - 2025-04-30 12:50:12', '2025-04-30 13:50:12', 1),
+(19, 'Generated Exam - 2025-04-30 12:56:18', '2025-04-30 13:56:18', 1),
+(20, 'Generated Exam - 2025-04-30 12:58:37', '2025-04-30 13:58:37', 1),
+(21, 'Generated Exam - 2025-04-30 12:58:39', '2025-04-30 13:58:39', 1),
+(22, 'Generated Exam - 2025-04-30 12:58:48', '2025-04-30 13:58:48', 1),
+(23, 'Generated Exam - 2025-04-30 12:59:55', '2025-04-30 13:59:55', 1),
+(24, 'Generated Exam - 2025-04-30 13:02:37', '2025-04-30 14:02:37', 1),
+(25, 'Generated Exam - 2025-04-30 13:02:50', '2025-04-30 14:02:50', 1),
+(26, 'Generated Exam - 2025-04-30 13:10:30', '2025-04-30 14:10:30', 1),
+(27, 'Matteeeee', '2025-04-30 14:10:48', 1);
 
 -- --------------------------------------------------------
 
@@ -141,7 +165,17 @@ CREATE TABLE `exam_questions` (
 --
 
 INSERT INTO `exam_questions` (`eq_id`, `ex_id`, `qu_id`, `question_order`) VALUES
-(4, 3, 4, 1);
+(4, 3, 4, 1),
+(5, 4, 8, 1),
+(6, 5, 70, 1),
+(7, 5, 69, 2),
+(8, 6, 70, 1),
+(9, 6, 69, 2),
+(10, 7, 69, 1),
+(11, 7, 70, 2),
+(12, 8, 69, 1),
+(13, 8, 70, 2),
+(14, 8, 91, 3);
 
 -- --------------------------------------------------------
 
@@ -154,21 +188,45 @@ CREATE TABLE `questions` (
   `ca_id` int(11) NOT NULL,
   `qt_id` int(11) NOT NULL,
   `text` text NOT NULL,
-  `ansver` varchar(255) NOT NULL,
+  `answer` varchar(255) NOT NULL,
   `image_url` varchar(255) DEFAULT NULL,
   `total_points` int(11) DEFAULT 0,
   `created_at` datetime DEFAULT current_timestamp(),
   `is_active` tinyint(1) DEFAULT 1,
-  `teacher_fk` int(11) DEFAULT NULL
+  `teacher_fk` int(11) DEFAULT NULL,
+  `co_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `questions`
 --
 
-INSERT INTO `questions` (`qu_id`, `ca_id`, `qt_id`, `text`, `ansver`, `image_url`, `total_points`, `created_at`, `is_active`, `teacher_fk`) VALUES
-(4, 10, 3, '\\int_0^1 x^2 dx = \\frac{1}{3}', '', NULL, 3, '2025-04-24 09:28:07', 1, 1),
-(8, 11, 3, 'What is the limit of \\frac{1}{x} as x approaches 0?', '', NULL, 2, '2025-04-24 09:28:07', 1, 2);
+INSERT INTO `questions` (`qu_id`, `ca_id`, `qt_id`, `text`, `answer`, `image_url`, `total_points`, `created_at`, `is_active`, `teacher_fk`, `co_id`) VALUES
+(4, 10, 3, '<p>A very smart question</p>', '<p>With a very smart answer.</p>', NULL, 3, '2025-04-24 09:28:07', 1, 3, 1),
+(8, 11, 3, 'What is the limit of \\frac{1}{x} as x approaches 0?', '', NULL, 2, '2025-04-24 09:28:07', 1, 2, 2),
+(69, 10, 1, '<p>Hur mycket är 1 euro i cent?</p>', '<p>100 cent</p>', NULL, 1, '2025-04-30 10:45:49', 1, 3, 1),
+(70, 11, 6, '<p>Om du ska välja mellan att köpa en dator och telefon.. vilken ska du köpa?</p>', '<p>Telefon, eftersom det behövs mycket mera all dags runt!</p>', NULL, 2, '2025-04-30 10:46:47', 1, 3, 2),
+(71, 10, 6, '<p>What is the tax rate for an income above 50000 in the progressive tax system?</p>', '<p>The tax rate is 30% for income above 50000.</p>', NULL, 3, '2025-04-30 10:48:52', 1, 3, 1),
+(72, 10, 6, '<p>What is the main purpose of progressive tax?</p>', '<p>To ensure that people with higher incomes pay a larger percentage in taxes.</p>', NULL, 2, '2025-04-30 10:48:52', 1, 3, 1),
+(73, 19, 3, '<p>What is the value of x in the equation: 2x + 5 = 15?</p>', 'x = 5', NULL, 2, '2025-04-30 10:48:52', 1, 1, 1),
+(74, 19, 7, '<p>Solve for x: 4x - 7 = 21</p>', 'x = 7', NULL, 3, '2025-04-30 10:48:52', 1, 1, 1),
+(75, 14, 12, 'What is the sine of 30 degrees?', '0.5', NULL, 1, '2025-04-30 10:48:52', 1, 1, 1),
+(76, 14, 10, 'Is tan(90 degrees) undefined?', 'True', NULL, 2, '2025-04-30 10:48:52', 1, 1, 1),
+(77, 23, 13, 'What is the derivative of f(x) = x^2?', '2x', NULL, 5, '2025-04-30 10:48:52', 1, 1, 3),
+(78, 23, 8, 'Find the limit: lim(x->0) (sin(x)/x)', '1', NULL, 3, '2025-04-30 10:48:52', 1, 1, 3),
+(79, 25, 3, 'What is the determinant of the matrix [[1,2], [3,4]]?', '-2', NULL, 4, '2025-04-30 10:48:52', 1, 1, 4),
+(80, 25, 7, 'What is the rank of a matrix with no rows?', '0', NULL, 2, '2025-04-30 10:48:52', 1, 1, 4),
+(81, 26, 6, 'If you roll a fair six-sided die, what is the probability of rolling a number greater than 4?', '1/3', NULL, 2, '2025-04-30 10:48:52', 1, 3, 4),
+(82, 26, 15, 'True or False: The probability of getting heads on a coin flip is 0.5.', 'True', NULL, 1, '2025-04-30 10:48:52', 1, 3, 4),
+(83, 13, 12, 'Which of the following is the largest number: 1, 2, 3, or 5?', '5', NULL, 2, '2025-04-30 10:48:52', 1, 3, 1),
+(84, 14, 7, 'Which is the correct formula for the area of a triangle?', 'Area = 0.5 * base * height', NULL, 3, '2025-04-30 10:48:52', 1, 3, 1),
+(85, 21, 13, 'What is the capital of Sweden?', 'Stockholm', NULL, 1, '2025-04-30 10:48:52', 1, 3, 2),
+(86, 22, 13, 'Who invented the telephone?', 'Alexander Graham Bell', NULL, 2, '2025-04-30 10:48:52', 1, 3, 2),
+(87, 23, 14, 'Explain the concept of integration in calculus.', 'Integration is the reverse process of differentiation. It is used to find the area under a curve and has wide applications in physics and engineering.', NULL, 10, '2025-04-30 10:48:52', 1, 3, 3),
+(88, 14, 14, 'Describe the Pythagorean theorem and provide an example.', 'The Pythagorean theorem states that in a right triangle, the square of the length of the hypotenuse is equal to the sum of the squares of the other two sides. For example, in a triangle with sides 3 and 4, the hypotenuse is 5.', NULL, 8, '2025-04-30 10:48:52', 1, 1, 1),
+(89, 21, 15, 'True or False: The earth is flat.', 'False', NULL, 1, '2025-04-30 10:48:52', 1, 3, 2),
+(90, 18, 15, 'True or False: 1+1 equals 2.', 'True', NULL, 1, '2025-04-30 10:48:52', 1, 1, 3),
+(91, 12, 5, '<p>rdscx</p>', '<p>bvfdscxz</p>', NULL, 2, '2025-04-30 11:04:39', 1, 3, 2);
 
 -- --------------------------------------------------------
 
@@ -192,17 +250,7 @@ INSERT INTO `questiontypes` (`qt_id`, `qt_name`, `qt_ca_fk`) VALUES
 (3, 'Avrundning', 3),
 (4, 'Gr. Proc.', 1),
 (5, 'Proc 2', 1),
-(6, 'Utmaning', 3),
-(7, 'Multiple Choice', 1),
-(8, 'Short Answer', 3),
-(9, 'Long Answer', 5),
-(10, 'True/False', 7),
-(11, 'Calculation', 9),
-(12, 'Multiple Choice', 1),
-(13, 'Short Answer', 3),
-(14, 'Long Answer', 5),
-(15, 'True/False', 7),
-(16, 'Calculation', 9);
+(6, 'Utmaning', 3);
 
 -- --------------------------------------------------------
 
@@ -245,7 +293,8 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`u_id`, `u_uname`, `u_mail`, `u_password`, `u_role_fk`) VALUES
 (1, 'Robin55', 'dahlgrenrobin1@gmail.com', '$2y$10$bwiXTNa/7BgqiXXG5J3GS.h8Zu9JnWLJfgbT7ibZ02lMHBISn8MTO', 3),
-(2, 'test1', 'test1@test.com', '$2y$10$xkSeTLeSohvmbJyOuBri.uY87wsbE7yEsr2bZLAylvC6.B0xWv3o6', 1);
+(2, 'test1', 'test1@test.com', '$2y$10$xkSeTLeSohvmbJyOuBri.uY87wsbE7yEsr2bZLAylvC6.B0xWv3o6', 1),
+(3, 'KingJingaling', 'JinjoTown@gruntilda.com', '$2a$12$22Z6HD.WEmBi7bYPXNdZXeBm2UzKKvd3I5BJdohy1I3durgcsCCBi', 3);
 
 --
 -- Indexes for dumped tables
@@ -286,7 +335,8 @@ ALTER TABLE `questions`
   ADD PRIMARY KEY (`qu_id`),
   ADD KEY `fk_questions_ca_id` (`ca_id`),
   ADD KEY `fk_questions_qt_id` (`qt_id`),
-  ADD KEY `teacher_fk` (`teacher_fk`);
+  ADD KEY `teacher_fk` (`teacher_fk`),
+  ADD KEY `fk_questions_courses` (`co_id`);
 
 --
 -- Indexes for table `questiontypes`
@@ -328,19 +378,19 @@ ALTER TABLE `courses`
 -- AUTO_INCREMENT for table `exams`
 --
 ALTER TABLE `exams`
-  MODIFY `ex_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `ex_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `exam_questions`
 --
 ALTER TABLE `exam_questions`
-  MODIFY `eq_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `eq_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `questions`
 --
 ALTER TABLE `questions`
-  MODIFY `qu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `qu_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- AUTO_INCREMENT for table `questiontypes`
@@ -358,7 +408,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `u_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- Constraints for dumped tables
@@ -389,6 +439,7 @@ ALTER TABLE `exam_questions`
 -- Constraints for table `questions`
 --
 ALTER TABLE `questions`
+  ADD CONSTRAINT `fk_questions_courses` FOREIGN KEY (`co_id`) REFERENCES `courses` (`co_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `questions_ibfk_1` FOREIGN KEY (`qt_id`) REFERENCES `questiontypes` (`qt_id`),
   ADD CONSTRAINT `questions_ibfk_2` FOREIGN KEY (`ca_id`) REFERENCES `categories` (`ca_id`),
   ADD CONSTRAINT `questions_ibfk_3` FOREIGN KEY (`teacher_fk`) REFERENCES `users` (`u_id`);
