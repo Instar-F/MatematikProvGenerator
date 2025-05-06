@@ -5,7 +5,7 @@ if(!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
     header("Location: login.php");
 }
 
-$result = $user_obj->checkUserRole($_SESSION['user']['role'], 900);
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 300);
 
 if (!$result) {
     echo "You do not have the rights to access this page.";
@@ -13,7 +13,7 @@ if (!$result) {
 }
 
 $userList["data"] = $pdo->query("
-			SELECT u_id, u_uname, u_mail, r_name 
+			SELECT u_id, u_uname, u_mail, r_name, r_level 
 			FROM users 
 			INNER JOIN roles 
 			ON users.u_role_fk = roles.r_id
@@ -66,7 +66,12 @@ if(isset($_POST['searchuser-submit'])){
 
     <?php 
 	if(!empty($userList["data"])):
-	foreach ($userList["data"] as $userRow): ?>
+	foreach ($userList["data"] as $userRow): 
+		// Skip users with r_level of 900 if the current user has r_level of 300
+		if ($_SESSION['user']['role'] == 300 && $userRow['r_level'] == 900) {
+			continue;
+		}
+	?>
         <div class="row mb-2">
             <div class="col"><?= htmlspecialchars($userRow['u_uname']) ?></div>
             <div class="col"><?= htmlspecialchars($userRow['u_mail']) ?></div>
