@@ -210,23 +210,23 @@ if (!empty($statusMessage)) {
 <div class="container-fluid mt-5">
     <div class="row">
         <!-- Sidebar with links -->
-        <div class="col-md-4 ps-0">
+        <div class="col-md-4 sidebar-container">
             <?php require_once "sidebar.php"; ?>
         </div>
         <!-- Main content -->
         <div class="col-md-8">
             <div class="card shadow-lg">
-                <div class="card-header text-center">
-                    <h2>Exam Generator</h2>
+                <div class="card-header card-header-centered">
+                    <h1>Generate Test</h1>
                 </div>
                 <div class="card-body">
                     <form id="examForm" method="POST">
-                        <div class="mb-3">
+                        <div class="form-group mb-3">
                             <label for="exam_name" class="form-label">Exam Name:</label>
                             <input type="text" name="exam_name" id="exam_name" class="form-control" required placeholder="Enter exam name">
                         </div>
 
-                        <div class="mb-3">
+                        <div class="form-group mb-3">
                             <label for="course_id" class="form-label">Course:</label>
                             <select name="course_id" id="course_id" class="form-select" required onchange="loadCategories()">
                                 <option value="">Select course</option>
@@ -246,14 +246,14 @@ if (!empty($statusMessage)) {
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="form-group mb-3">
                             <label for="category_id" class="form-label">Category:</label>
                             <select name="category_id" id="category_id" class="form-select" required>
                                 <option value="">Select course first</option>
                             </select>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="form-group mb-3">
                             <label for="num_questions" class="form-label">Number of Questions:</label>
                             <input type="number" id="num_questions" class="form-control" min="1" max="20" value="5" onkeydown="handleNumberInput(event)">
                         </div>
@@ -262,7 +262,7 @@ if (!empty($statusMessage)) {
                             <button type="button" class="btn btn-primary" onclick="buildQuestionSlots()">Load Questions</button>
                         </div>
 
-                        <div id="questionSlots" class="mb-4"></div>
+                        <div id="questionSlots" class="question-slots mb-4"></div>
 
                         <input type="hidden" name="questions[]" id="question_ids">
                         <div class="d-grid">
@@ -341,10 +341,7 @@ function buildQuestionSlots() {
     for (let i = 0; i < count; i++) {
         const wrapper = document.createElement('div');
         wrapper.id = `question-block-${i}`;
-        wrapper.style.marginBottom = "20px";
-        wrapper.style.padding = "10px";
-        wrapper.style.border = "1px solid #ddd";
-        wrapper.style.borderRadius = "5px";
+        wrapper.className = "question-block";
 
         const typeSelect = document.createElement('select');
         typeSelect.name = `qt_select_${i}`;
@@ -364,21 +361,18 @@ function buildQuestionSlots() {
             <option value="6">Difficulty 6</option>
         `;
         difficultySelect.onchange = () => fetchQuestion(i);
-        difficultySelect.style.marginLeft = "10px";
+        difficultySelect.className = "difficulty-select";
 
         const preview = document.createElement('div');
         preview.id = `preview-${i}`;
-        preview.style.marginTop = "10px";
-        preview.style.padding = "10px";
-        preview.style.backgroundColor = "#f9f9f9";
-        preview.style.borderRadius = "5px";
+        preview.className = "question-preview";
         preview.innerText = "No question loaded yet.";
 
         const rerollBtn = document.createElement('button');
         rerollBtn.type = 'button';
         rerollBtn.innerText = 'Reroll';
         rerollBtn.onclick = () => fetchQuestion(i);
-        rerollBtn.style.marginTop = "5px";
+        rerollBtn.className = "btn btn-secondary reroll-btn";
 
         wrapper.innerHTML = `<strong>Question ${i + 1}</strong><br>`;
         wrapper.appendChild(typeSelect);

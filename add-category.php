@@ -60,36 +60,38 @@ try {
         <!-- Main content -->
         <div class="col-md-8">
             <div class="container mt-5">
-                <h1 class="mb-4">Add New Category</h1>
-
-                <?php if (!empty($successMessage)): ?>
-                    <div class="alert alert-success"><?php echo htmlspecialchars($successMessage); ?></div>
-                <?php elseif (!empty($errorMessage)): ?>
-                    <div class="alert alert-danger"><?php echo htmlspecialchars($errorMessage); ?></div>
-                <?php endif; ?>
-
-                <form method="POST" action="">
-                    <div class="mb-3">
-                        <label for="category_name" class="form-label">Category Name</label>
-                        <input type="text" class="form-control" id="category_name" name="category_name" required>
+                <div class="card shadow-lg">
+                    <div class="card-header">
+                        Add New Category
                     </div>
-
-                    <div class="mb-3">
-                        <label for="course_id" class="form-label">Course</label>
-                        <select class="form-select" id="course_id" name="course_id" required>
-                            <option value="" disabled selected>Select a course</option>
-                            <?php if (!empty($courses)): ?>
-                                <?php foreach ($courses as $course): ?>
-                                    <option value="<?= htmlspecialchars($course['co_id']) ?>"><?= htmlspecialchars($course['co_name']) ?></option>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <option disabled>No courses found</option>
-                            <?php endif; ?>
-                        </select>
+                    <div class="card-body">
+                        <?php if (!empty($successMessage)): ?>
+                            <div class="alert alert-success"><?= htmlspecialchars($successMessage); ?></div>
+                        <?php elseif (!empty($errorMessage)): ?>
+                            <div class="alert alert-danger"><?= htmlspecialchars($errorMessage); ?></div>
+                        <?php endif; ?>
+                        <form method="POST" action="">
+                            <div class="form-group mb-3">
+                                <label for="category_name" class="form-label">Category Name</label>
+                                <input type="text" class="form-control" id="category_name" name="category_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="course_id" class="form-label">Course</label>
+                                <select class="form-select" id="course_id" name="course_id" required>
+                                    <option value="" disabled selected>Select a course</option>
+                                    <?php if (!empty($courses)): ?>
+                                        <?php foreach ($courses as $course): ?>
+                                            <option value="<?= htmlspecialchars($course['co_id']) ?>"><?= htmlspecialchars($course['co_name']) ?></option>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <option disabled>No courses found</option>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Category</button>
+                        </form>
                     </div>
-
-                    <button type="submit" class="btn btn-primary">Add Category</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
