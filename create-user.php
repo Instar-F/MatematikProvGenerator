@@ -30,9 +30,14 @@ if (isset($_POST['register-submit'])) {
 }
 ?>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
+        </div>
+        <!-- Main content -->
+        <div class="col-md-8">
             <div class="card shadow-lg p-4">
                 <h2 class="text-center mb-4">Create new user</h2>
                 <form action="" method="POST">
@@ -76,3 +81,5 @@ if (isset($_POST['register-submit'])) {
         </div>
     </div>
 </div>
+
+<?php require_once "include/footer.php"; ?>

@@ -50,62 +50,87 @@ if(isset($_POST['edituser-submit'])){
 		}
 	}
 }
+
+// Determine the previous page for highlighting in the sidebar
+$previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH)) : '';
 ?>
 
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Edit user</h2>
-                <form action="" method="POST" class="mb-4">
-                    
-                    <div class="mb-3">
-                        <label for="uname" class="form-label">Username:</label>
-                        <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="umail" class="form-label">Email:</label>
-                        <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
-                    </div>
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php
+            $currentPage = $previousPage; // Use the previous page for highlighting
+            require_once "sidebar.php";
+            ?>
+        </div>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="row justify-content-center">
+                <div class="col-md-8"> <!-- Increased width from col-md-6 to col-md-8 -->
+                    <div class="card shadow-lg p-4">
+                        <h2 class="text-center mb-4">Edit User</h2>
+                        <form action="" method="POST" class="mb-4">
+                            
+                            <div class="mb-3">
+                                <label for="uname" class="form-label">Username:</label>
+                                <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="umail" class="form-label">Email:</label>
+                                <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="upass" class="form-label">Password:</label>
-                        <input type="password" id="upass" name="upass" class="form-control">
-                    </div>
+                            <div class="mb-3">
+                                <label for="upass" class="form-label">Password:</label>
+                                <input type="password" id="upass" name="upass" class="form-control">
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="upassrpt" class="form-label">Repeat Password:</label>
-                        <input type="password" id="upassrpt" name="upassrpt" class="form-control">
-                    </div>
+                            <div class="mb-3">
+                                <label for="upassrpt" class="form-label">Repeat Password:</label>
+                                <input type="password" id="upassrpt" name="upassrpt" class="form-control">
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="urole" class="form-label">User Role:</label>
-                        <select id="urole" name="urole" class="form-select" required>
-                            <?php
+                            <div class="mb-3">
+                                <label for="urole" class="form-label">User Role:</label>
+                                <select id="urole" name="urole" class="form-select" required>
+                                    <?php
 
-								$currentRole = $currentUserInfo['data']['u_role_fk']; 
-								foreach ($allUserRoles as $role) {
-										$selected = ($role['r_id'] == $currentRole) ? 'selected' : ''; 
-										echo "<option value='{$role['r_id']}' {$selected}>{$role['r_name']}</option>";
-								}
-							?>
-                        </select>
-                    </div>
+										$currentRole = $currentUserInfo['data']['u_role_fk']; 
+										foreach ($allUserRoles as $role) {
+												$selected = ($role['r_id'] == $currentRole) ? 'selected' : ''; 
+												echo "<option value='{$role['r_id']}' {$selected}>{$role['r_name']}</option>";
+										}
+									?>
+                                </select>
+                            </div>
 
-                    <div class="d-grid">
-                        <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
-                    </div>
+                            <div class="d-grid">
+                                <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
+                            </div>
 
-                </form>
-				<h2 class="text-center mb-4">Delete user</h2>
-                <form action="" method="POST">
-                    <div class="d-grid">
-                        <button type="submit" name="deleteuser-submit" class="btn btn-danger">Delete</button>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
-    </div>
-
+            <div class="row justify-content-center mt-4">
+                <div class="col-md-8">
+                    <div class="card shadow-lg p-4 border-danger">
+                        <h2 class="text-center text-danger mb-4">Delete User</h2>
+                        <p class="text-center text-muted">
+                            Are you sure you want to delete this user? This action cannot be undone.
+                        </p>
+                        <form action="" method="POST" class="text-center">
+                            <button type="submit" name="deleteuser-submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-trash"></i> Delete User
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<?php require_once "include/footer.php"; ?>

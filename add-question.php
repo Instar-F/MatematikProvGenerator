@@ -53,10 +53,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
 }
 ?>
 
-<div class="container mt-5">
+<div class="container-fluid mt-5">
     <div class="row">
-        <div class="col-md-10 offset-md-1">
-            <div class="card shadow p-4 mb-5">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
+        </div>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="card shadow-lg p-4 mb-5">
                 <h2 class="mb-4 text-center">Matematisk Frågeredigerare</h2>
 
                 <form method="post" action="" id="questionForm" enctype="multipart/form-data">

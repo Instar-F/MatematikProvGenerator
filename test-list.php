@@ -29,58 +29,64 @@ if(isset($_POST['searchuser-submit'])){
 
 ?>
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-		<?php if(isset($_GET['deleteduser'])): ?>
-		<div class="user-feedback bg-success text-white m-4"><p class="text-center m-2">User was successfully deleted</p></div>
-		<?php endif; ?>
-        <div class="col-md-6">
-            <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Test List</h2>
-                <form action="" method="POST">
-                    
-                    <div class="mb-3">
-                        <label for="testname" class="form-label">Name</label>
-                        <input type="text" value="" id="testname" name="testname" class="form-control" required>
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
+        </div>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="row justify-content-center">
+                <?php if(isset($_GET['deleteduser'])): ?>
+                <div class="user-feedback bg-success text-white m-4"><p class="text-center m-2">User was successfully deleted</p></div>
+                <?php endif; ?>
+                <div class="col-md-6">
+                    <div class="card shadow-lg p-4">
+                        <h2 class="text-center mb-4">Test List</h2>
+                        <form action="" method="POST">
+                            <div class="mb-3">
+                                <label for="testname" class="form-label">Name</label>
+                                <input type="text" value="" id="testname" name="testname" class="form-control" required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
+                            </div>
+                        </form>
                     </div>
-
-                    <div class="d-grid">
-                        <button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
-                    </div>
-
-                </form>
+                </div>
+            </div>
+            <div class="container mt-4">
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Name</th>
+                            <th>Created By</th>
+                            <th>Timestamp</th>
+                            <th>Management</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        if (!empty($testList["data"])):
+                            foreach ($testList["data"] as $userRow): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($userRow['ex_name']) ?></td>
+                                    <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
+                                    <td><?= htmlspecialchars($userRow['created_at']) ?></td>
+                                    <td><a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-primary btn-sm">Show</a></td>
+                                </tr>
+                            <?php endforeach; 
+                        else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center">No results found</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    <div class="container mt-4">
-    <table class="table table-striped table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>Name</th>
-                <th>Created By</th>
-                <th>Timestamp</th>
-                <th>Management</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php 
-            if (!empty($testList["data"])):
-                foreach ($testList["data"] as $userRow): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($userRow['ex_name']) ?></td>
-                        <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
-                        <td><?= htmlspecialchars($userRow['created_at']) ?></td>
-                        <td><a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-primary btn-sm">Show</a></td>
-                    </tr>
-                <?php endforeach; 
-            else: ?>
-                <tr>
-                    <td colspan="4" class="text-center">No results found</td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
 </div>
-</div>
-</div>
-</div>
+
+<?php require_once "include/footer.php"; ?>

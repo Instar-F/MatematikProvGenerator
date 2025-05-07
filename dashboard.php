@@ -13,59 +13,25 @@ if (!$result) {
 }
 ?>
 
-<div class="container mt-5">
+<div class="container-fluid mt-5">
     <div class="row">
-        <div class="col-12 text-center mb-2">
-            <h1 class="display-4">Dashboard</h1>
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+       <?php require_once "sidebar.php"; ?>
         </div>
-    </div>
-    <div class="row justify-content-center">
+        <!-- Main content with header and text -->
         <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header text-center">
+                   <h1 class="text-center">Admin Dashboard</h1>
+                </div>
             <div class="card shadow-lg">
                 <div class="card-body">
-                    <div class="row text-center">
-                        <!-- Existing Links -->
-                        <div class="col-md-6 mb-3">
-                            <a href="create-user.php" class="btn btn-outline-primary btn-lg w-100">
-                                <i class="bi bi-person-plus"></i> Create User
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="add-question.php" class="btn btn-outline-success btn-lg w-100">
-                                <i class="bi bi-question-circle"></i> Add Question
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="test-list.php" class="btn btn-outline-warning btn-lg w-100">
-                                <i class="bi bi-people"></i> Test List
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="generate-test.php" class="btn btn-outline-primary btn-lg w-100">
-                                <i class="bi bi-person-plus"></i> Generate Test
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="assignments.php" class="btn btn-outline-success btn-lg w-100">
-                                <i class="bi bi-question-circle"></i> Assignments
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="user-management.php" class="btn btn-outline-warning btn-lg w-100">
-                                <i class="bi bi-people"></i> User Management
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="add-course.php" class="btn btn-outline-primary btn-lg w-100">
-                                <i class="bi bi-person-plus"></i> Add Course
-                            </a>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <a href="add-category.php" class="btn btn-outline-success btn-lg w-100">
-                                <i class="bi bi-question-circle"></i> Add Category
-                            </a>
-                        </div>
-                    </div>
+                    <h2 class="text-center">Welcome to the Admin Dashboard</h2>
+                    <p class="mt-4">
+                        Here you can manage users, create and assign tests, add courses and categories, and perform other administrative tasks. 
+                        Use the links on the left to navigate through the available options.
+                    </p>
                 </div>
                 <div class="card-footer text-center">
                     <small class="text-muted">Admin Panel - MatematikProvGenerator</small>
