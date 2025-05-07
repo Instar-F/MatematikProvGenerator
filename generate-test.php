@@ -200,54 +200,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['questions'])) {
 
 
 require_once "include/header.php";
+
 // Display status message if available
 if (!empty($statusMessage)) {
     echo $statusMessage;
 }
-
 ?>
 
-<h2>Interactive Exam Generator</h2>
-<div id="debug-area" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none;">
-    <h4>Debug Information</h4>
-    <div id="debug-content"></div>
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
+        </div>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header text-center">
+                    <h2>Exam Generator</h2>
+                </div>
+                <div class="card-body">
+                    <form id="examForm" method="POST">
+                        <div class="mb-3">
+                            <label for="exam_name" class="form-label">Exam Name:</label>
+                            <input type="text" name="exam_name" id="exam_name" class="form-control" required placeholder="Enter exam name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="course_id" class="form-label">Course:</label>
+                            <select name="course_id" id="course_id" class="form-select" required onchange="loadCategories()">
+                                <option value="">Select course</option>
+                                <?php
+                                try {
+                                    $courses = $mysqli->query("SELECT co_id, co_name FROM courses ORDER BY co_name");
+                                    if (!$courses) {
+                                        throw new Exception("Error fetching courses: " . $mysqli->error);
+                                    }
+                                    foreach ($courses as $c): ?>
+                                        <option value="<?= $c['co_id'] ?>"><?= htmlspecialchars($c['co_name']) ?></option>
+                                    <?php endforeach;
+                                } catch (Exception $e) {
+                                    echo "<option value=''>Error loading courses: " . htmlspecialchars($e->getMessage()) . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Category:</label>
+                            <select name="category_id" id="category_id" class="form-select" required>
+                                <option value="">Select course first</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="num_questions" class="form-label">Number of Questions:</label>
+                            <input type="number" id="num_questions" class="form-control" min="1" max="20" value="5" onkeydown="handleNumberInput(event)">
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="button" class="btn btn-primary" onclick="buildQuestionSlots()">Load Questions</button>
+                        </div>
+
+                        <div id="questionSlots" class="mb-4"></div>
+
+                        <input type="hidden" name="questions[]" id="question_ids">
+                        <div class="d-grid">
+                            <button type="submit" id="submitButton" class="btn btn-success">Create Exam</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<form id="examForm" method="POST">
-    <label for="exam_name">Exam Name:</label>
-    <input type="text" name="exam_name" id="exam_name" required placeholder="Enter exam name"><br><br>
-
-    <label for="course_id">Course:</label>
-    <select name="course_id" id="course_id" required onchange="loadCategories()">
-        <option value="">Select course</option>
-        <?php
-        try {
-            $courses = $mysqli->query("SELECT co_id, co_name FROM courses ORDER BY co_name");
-            if (!$courses) {
-                throw new Exception("Error fetching courses: " . $mysqli->error);
-            }
-            foreach ($courses as $c): ?>
-                <option value="<?= $c['co_id'] ?>"><?= htmlspecialchars($c['co_name']) ?></option>
-            <?php endforeach;
-        } catch (Exception $e) {
-            echo "<option value=''>Error loading courses: " . htmlspecialchars($e->getMessage()) . "</option>";
-        }
-        ?>
-    </select><br><br>
-
-    <label for="category_id">Category:</label>
-    <select name="category_id" id="category_id" required>
-        <option value="">Select course first</option>
-    </select><br><br>
-
-    <label for="num_questions">Number of Questions:</label>
-    <input type="number" id="num_questions" min="1" max="20" value="5" onkeydown="handleNumberInput(event)">
-    <button type="button" onclick="buildQuestionSlots()">➕ Load Questions</button><br><br>
-
-    <div id="questionSlots"></div>
-    <input type="hidden" name="questions[]" id="question_ids"><br>
-    <button type="submit" id="submitButton">✅ Create Exam</button>
-</form>
 
 <script>
 // Only define questionTypes if available from server
@@ -350,7 +376,7 @@ function buildQuestionSlots() {
 
         const rerollBtn = document.createElement('button');
         rerollBtn.type = 'button';
-        rerollBtn.innerText = '🔄 Reroll';
+        rerollBtn.innerText = 'Reroll';
         rerollBtn.onclick = () => fetchQuestion(i);
         rerollBtn.style.marginTop = "5px";
 
@@ -435,3 +461,5 @@ function handleNumberInput(event) {
     }
 }
 </script>
+
+<?php require_once "include/footer.php"; ?>

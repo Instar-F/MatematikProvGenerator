@@ -51,37 +51,50 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container mt-5">
-    <h1 class="mb-4">Add New Category</h1>
-
-    <?php if (!empty($successMessage)): ?>
-        <div class="alert alert-success"><?php echo htmlspecialchars($successMessage); ?></div>
-    <?php elseif (!empty($errorMessage)): ?>
-        <div class="alert alert-danger"><?php echo htmlspecialchars($errorMessage); ?></div>
-    <?php endif; ?>
-
-    <form method="POST" action="">
-        <div class="mb-3">
-            <label for="category_name" class="form-label">Category Name</label>
-            <input type="text" class="form-control" id="category_name" name="category_name" required>
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
         </div>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="container mt-5">
+                <h1 class="mb-4">Add New Category</h1>
 
-        <div class="mb-3">
-            <label for="course_id" class="form-label">Course</label>
-            <select class="form-select" id="course_id" name="course_id" required>
-                <option value="" disabled selected>Select a course</option>
-                <?php if (!empty($courses)): ?>
-                    <?php foreach ($courses as $course): ?>
-                        <option value="<?= htmlspecialchars($course['co_id']) ?>"><?= htmlspecialchars($course['co_name']) ?></option>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <option disabled>No courses found</option>
+                <?php if (!empty($successMessage)): ?>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($successMessage); ?></div>
+                <?php elseif (!empty($errorMessage)): ?>
+                    <div class="alert alert-danger"><?php echo htmlspecialchars($errorMessage); ?></div>
                 <?php endif; ?>
-            </select>
-        </div>
 
-        <button type="submit" class="btn btn-primary">Add Category</button>
-    </form>
+                <form method="POST" action="">
+                    <div class="mb-3">
+                        <label for="category_name" class="form-label">Category Name</label>
+                        <input type="text" class="form-control" id="category_name" name="category_name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="course_id" class="form-label">Course</label>
+                        <select class="form-select" id="course_id" name="course_id" required>
+                            <option value="" disabled selected>Select a course</option>
+                            <?php if (!empty($courses)): ?>
+                                <?php foreach ($courses as $course): ?>
+                                    <option value="<?= htmlspecialchars($course['co_id']) ?>"><?= htmlspecialchars($course['co_name']) ?></option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option disabled>No courses found</option>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Add Category</button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
+
+<?php require_once "include/footer.php"; ?>
 </body>
 </html>

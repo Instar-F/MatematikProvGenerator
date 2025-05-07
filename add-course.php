@@ -31,24 +31,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- Bootstrap CSS already linked -->
 </head>
 <body>
-<div class="container mt-5">
-    <h1 class="mb-4">Add New Course</h1>
-    <?php if (!empty($successMessage)): ?>
-        <div class="alert alert-success"><?php echo $successMessage; ?></div>
-    <?php elseif (!empty($errorMessage)): ?>
-        <div class="alert alert-danger"><?php echo $errorMessage; ?></div>
-    <?php endif; ?>
-    <form method="POST" action="">
-        <div class="mb-3">
-            <label for="course_name" class="form-label">Course Name</label>
-            <input type="text" class="form-control" id="course_name" name="course_name" required>
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
         </div>
-        <div class="mb-3">
-            <label for="description" class="form-label">Description</label>
-            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="container mt-5">
+                <h1 class="mb-4">Add New Course</h1>
+                <?php if (!empty($successMessage)): ?>
+                    <div class="alert alert-success"><?php echo $successMessage; ?></div>
+                <?php elseif (!empty($errorMessage)): ?>
+                    <div class="alert alert-danger"><?php echo $errorMessage; ?></div>
+                <?php endif; ?>
+                <form method="POST" action="">
+                    <div class="mb-3">
+                        <label for="course_name" class="form-label">Course Name</label>
+                        <input type="text" class="form-control" id="course_name" name="course_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Course</button>
+                </form>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Add Course</button>
-    </form>
+    </div>
 </div>
+
+<?php require_once "include/footer.php"; ?>
 </body>
 </html>

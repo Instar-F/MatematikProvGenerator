@@ -37,6 +37,9 @@ if (isset($_GET['exid'])) {
     echo "No test selected.";
     exit();
 }
+
+// Manually set the current page to "test-list.php" for sidebar highlighting
+$currentPage = 'test-list.php';
 ?>
 
 <!DOCTYPE html>
@@ -187,65 +190,72 @@ if (isset($_GET['exid'])) {
 </head>
 <body>
 
-<!-- Info Card -->
-<div class="container mt-5 no-print">
-    <div class="row justify-content-center">
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
+        </div>
+        <!-- Main content -->
         <div class="col-md-8">
-            <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Test Details</h2>
-                <div class="mb-3"><h4>Test Name:</h4><p><?= htmlspecialchars($test['ex_name']) ?></p></div>
-                <div class="mb-3"><h4>Created By:</h4><p><?= htmlspecialchars($test['u_uname']) ?></p></div>
-                <div class="mb-3"><h4>Created At:</h4><p><?= htmlspecialchars($test['created_at']) ?></p></div>
-                <button class="btn btn-primary mt-3" onclick="window.print()">Skriv ut</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Main Layout -->
-<div class="main-wrapper">
-    <!-- A4-sized Preview -->
-    <div class="left-panel">
-        <div class="exam-header">
-            <div>
-                <strong><?= htmlspecialchars($test['ex_name']) ?></strong><br>
-                <strong>Namn:</strong> __________________
-            </div>
-            <div>
-                <strong>Poäng:</strong> ________/36p<br>
-                <strong>Vitsord:</strong>
-            </div>
-        </div>
-
-        <?php if (!empty($questions)): ?>
-            <?php foreach ($questions as $index => $question): ?>
-                <div class="question">
-                    <div><strong>Uppgift <?= $index + 1 ?>:</strong></div>
-                    <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
-                    <div class="points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <div class="alert alert-warning text-center">Inga frågor hittades för detta prov.</div>
-        <?php endif; ?>
-    </div>
-
-    <!-- Answer Panel -->
-    <div class="right-panel no-print">
-        <div class="answers-section">
-            <h4>Svar</h4>
-            <?php if (!empty($questions)): ?>
-                <?php foreach ($questions as $index => $question): ?>
-                    <?php if (!empty($question['answer'])): ?>
-                        <div class="answer-item">
-                            <h5>Uppgift <?= $index + 1 ?>:</h5>
-                            <div><?= nl2br(strip_tags($question['answer'], '<br><ul><ol><li><strong><em>')) ?></div>
+            <div class="container mt-5 no-print">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card shadow-lg p-4">
+                            <h2 class="text-center mb-4">Test Details</h2>
+                            <div class="mb-3"><h4>Test Name:</h4><p><?= htmlspecialchars($test['ex_name']) ?></p></div>
+                            <div class="mb-3"><h4>Created By:</h4><p><?= htmlspecialchars($test['u_uname']) ?></p></div>
+                            <div class="mb-3"><h4>Created At:</h4><p><?= htmlspecialchars($test['created_at']) ?></p></div>
+                            <button class="btn btn-primary mt-3" onclick="window.print()">Skriv ut</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-wrapper">
+                <div class="left-panel">
+                    <div class="exam-header">
+                        <div>
+                            <strong><?= htmlspecialchars($test['ex_name']) ?></strong><br>
+                            <strong>Namn:</strong> __________________
+                        </div>
+                        <div>
+                            <strong>Poäng:</strong> ________/36p<br>
+                            <strong>Vitsord:</strong>
+                        </div>
+                    </div>
+
+                    <?php if (!empty($questions)): ?>
+                        <?php foreach ($questions as $index => $question): ?>
+                            <div class="question">
+                                <div><strong>Uppgift <?= $index + 1 ?>:</strong></div>
+                                <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                <div class="points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="alert alert-warning text-center">Inga frågor hittades för detta prov.</div>
                     <?php endif; ?>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <p>Inga svar tillgängliga.</p>
-            <?php endif; ?>
+                </div>
+
+                <div class="right-panel no-print">
+                    <div class="answers-section">
+                        <h4>Svar</h4>
+                        <?php if (!empty($questions)): ?>
+                            <?php foreach ($questions as $index => $question): ?>
+                                <?php if (!empty($question['answer'])): ?>
+                                    <div class="answer-item">
+                                        <h5>Uppgift <?= $index + 1 ?>:</h5>
+                                        <div><?= nl2br(strip_tags($question['answer'], '<br><ul><ol><li><strong><em>')) ?></div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p>Inga svar tillgängliga.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
