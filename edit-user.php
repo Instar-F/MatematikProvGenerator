@@ -17,44 +17,40 @@ $stmt->execute(['userRole' => $_SESSION['user']['role']]);
 $allUserRoles = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if(isset($_GET['uid'])){
-	$userId = $_GET['uid'];
-	$currentUserInfo = $user_obj->selectUserInfo($userId);
+    $userId = $_GET['uid'];
+    $currentUserInfo = $user_obj->selectUserInfo($userId);
 }
 
-
 if(isset($_POST['deleteuser-submit'])){
-	header("Location: delete-user.php?uid={$userId}");
+    header("Location: delete-user.php?uid={$userId}");
 }
 
 if(isset($_POST['edituser-submit'])){
-	echo "<h2>Form submitted</h2>";
-	
-	$uname = cleanInput($_POST["uname"]);
-	$umail = trim($_POST["umail"]);
-	$upass = $_POST["upass"];
-	$upassrpt = $_POST["upassrpt"];
-	$urole = cleanInput($_POST["urole"]);
-	
-	$result = $user_obj->checkUserRegisterInfo($uname, $umail, $upass, $upassrpt, "edit", $userId);
+    $uname = cleanInput($_POST["uname"]);
+    $umail = trim($_POST["umail"]);
+    $upass = $_POST["upass"];
+    $upassrpt = $_POST["upassrpt"];
+    $urole = cleanInput($_POST["urole"]);
+    
+    $result = $user_obj->checkUserRegisterInfo($uname, $umail, $upass, $upassrpt, "edit", $userId);
 
-	if (!$result['success']) {
-		echo "Error: " . $result['error'];
-	} 
-	else {
-		$result = $user_obj->editUser($userId, $uname, $umail, $upass, $urole);
-		if (!$result['success']) {
-			echo "Error: " . $result['error'];
-		} 
-		else {
-			echo "User Edited";
-		}
-	}
+    if (!$result['success']) {
+        echo "Error: " . $result['error'];
+    } 
+    else {
+        $result = $user_obj->editUser($userId, $uname, $umail, $upass, $urole);
+        if (!$result['success']) {
+            echo "Error: " . $result['error'];
+        } 
+        else {
+            echo "User Edited";
+        }
+    }
 }
 
 // Determine the previous page for highlighting in the sidebar
 $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH)) : '';
 ?>
-
 
 <div class="container-fluid mt-5">
     <div class="row">
@@ -67,67 +63,50 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
         </div>
         <!-- Main content -->
         <div class="col-md-8">
-            <div class="row justify-content-center">
-                <div class="col-md-8"> <!-- Increased width from col-md-6 to col-md-8 -->
-                    <div class="card shadow-lg p-4">
-                        <h2 class="text-center mb-4">Edit User</h2>
-                        <form action="" method="POST" class="mb-4">
-                            
-                            <div class="mb-3">
-                                <label for="uname" class="form-label">Username:</label>
-                                <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="umail" class="form-label">Email:</label>
-                                <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="upass" class="form-label">Password:</label>
-                                <input type="password" id="upass" name="upass" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="upassrpt" class="form-label">Repeat Password:</label>
-                                <input type="password" id="upassrpt" name="upassrpt" class="form-control">
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="urole" class="form-label">User Role:</label>
-                                <select id="urole" name="urole" class="form-select" required>
-                                    <?php
-
-										$currentRole = $currentUserInfo['data']['u_role_fk']; 
-										foreach ($allUserRoles as $role) {
-												$selected = ($role['r_id'] == $currentRole) ? 'selected' : ''; 
-												echo "<option value='{$role['r_id']}' {$selected}>{$role['r_name']}</option>";
-										}
-									?>
-                                </select>
-                            </div>
-
-                            <div class="d-grid">
-                                <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
-                            </div>
-
-                        </form>
+            <div class="card shadow-lg p-4">
+                <h2 class="text-center mb-4">Edit User</h2>
+                <form action="" method="POST" class="mb-4">
+                    <div class="mb-3">
+                        <label for="uname" class="form-label">Username:</label>
+                        <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
                     </div>
-                </div>
+                    <div class="mb-3">
+                        <label for="umail" class="form-label">Email:</label>
+                        <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="upass" class="form-label">Password:</label>
+                        <input type="password" id="upass" name="upass" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="upassrpt" class="form-label">Repeat Password:</label>
+                        <input type="password" id="upassrpt" name="upassrpt" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label for="urole" class="form-label">User Role:</label>
+                        <select id="urole" name="urole" class="form-select" required>
+                            <?php
+                            $currentRole = $currentUserInfo['data']['u_role_fk']; 
+                            foreach ($allUserRoles as $role) {
+                                $selected = ($role['r_id'] == $currentRole) ? 'selected' : ''; 
+                                echo "<option value='{$role['r_id']}' {$selected}>{$role['r_name']}</option>";
+                            }
+                            ?>
+                        </select>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
+                    </div>
+                </form>
             </div>
-            <div class="row justify-content-center mt-4">
-                <div class="col-md-8">
-                    <div class="card shadow-lg p-4 border-danger">
-                        <h2 class="text-center text-danger mb-4">Delete User</h2>
-                        <p class="text-center text-muted">
-                            Are you sure you want to delete this user? This action cannot be undone.
-                        </p>
-                        <form action="" method="POST" class="text-center">
-                            <button type="submit" name="deleteuser-submit" class="btn btn-danger btn-lg">
-                                <i class="bi bi-trash"></i> Delete User
-                            </button>
-                        </form>
-                    </div>
-                </div>
+            <div class="card shadow-lg p-4 border-danger mt-4">
+                <h2 class="text-center text-danger mb-4">Delete User</h2>
+                <p class="text-center text-muted">
+                    Are you sure you want to delete this user? This action cannot be undone.
+                </p>
+                <form action="" method="POST" class="text-center">
+                    <button type="submit" name="deleteuser-submit" class="btn btn-danger btn-lg">Delete User</button>
+                </form>
             </div>
         </div>
     </div>

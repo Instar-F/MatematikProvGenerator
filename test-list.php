@@ -41,7 +41,7 @@ if(isset($_POST['searchuser-submit'])){
                 <?php if(isset($_GET['deleteduser'])): ?>
                 <div class="user-feedback bg-success text-white m-4"><p class="text-center m-2">User was successfully deleted</p></div>
                 <?php endif; ?>
-                <div class="col-md-6">
+                <div class="col-md-8"> <!-- Increased width from col-md-6 to col-md-8 -->
                     <div class="card shadow-lg p-4">
                         <h2 class="text-center mb-4">Test List</h2>
                         <form action="" method="POST">
