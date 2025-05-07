@@ -170,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['questions'])) {
         $questionIds = array_filter(array_map('intval', explode(',', $_POST['questions'][0] ?? '')));
 
         if (empty($questionIds)) {
-            $statusMessage = "<div style='color:red;'>❌ No valid questions selected.</div>";
+            $statusMessage = "<div style='color:red;'>No valid questions selected.</div>";
         } else {
             $stmt = $mysqli->prepare("INSERT INTO exams (ex_name, ex_createdby_fk) VALUES (?, ?)");
             $stmt->bind_param("si", $examName, $createdBy);
@@ -191,63 +191,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['questions'])) {
                 }
             }
 
-            $statusMessage = "<div style='color:green;'>✅ Exam '<strong>" . htmlspecialchars($examName) . "</strong>' created with <strong>" . count($questionIds) . "</strong> questions.</div>";
+            $statusMessage = "<div style='color:green;'>Exam '<strong>" . htmlspecialchars($examName) . "</strong>' created with <strong>" . count($questionIds) . "</strong> questions.</div>";
         }
     } catch (Exception $e) {
-        $statusMessage = "<div style='color:red;'>❌ Error creating exam: " . htmlspecialchars($e->getMessage()) . "</div>";
+        $statusMessage = "<div style='color:red;'>Error creating exam: " . htmlspecialchars($e->getMessage()) . "</div>";
     }
 }
 
 
 require_once "include/header.php";
-// Display status message if available
+
 if (!empty($statusMessage)) {
     echo $statusMessage;
 }
-
 ?>
 
-<h2>Interactive Exam Generator</h2>
-<div id="debug-area" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 15px; display: none;">
-    <h4>Debug Information</h4>
-    <div id="debug-content"></div>
+<div class="container-fluid mt-5">
+    <div class="row">
+        <!-- Sidebar with links -->
+        <div class="col-md-4 ps-0">
+            <?php require_once "sidebar.php"; ?>
+        </div>
+        <!-- Main content -->
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Exam Generator</h4>
+                </div>
+                <div class="card-body">
+                    <form id="examForm" method="POST">
+                        <div class="mb-3">
+                            <label for="exam_name" class="form-label">Exam Name:</label>
+                            <input type="text" name="exam_name" id="exam_name" class="form-control" required placeholder="Enter exam name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="course_id" class="form-label">Course:</label>
+                            <select name="course_id" id="course_id" class="form-select" required onchange="loadCategories()">
+                                <option value="">Select course</option>
+                                <?php
+                                try {
+                                    $courses = $mysqli->query("SELECT co_id, co_name FROM courses ORDER BY co_name");
+                                    if (!$courses) {
+                                        throw new Exception("Error fetching courses: " . $mysqli->error);
+                                    }
+                                    foreach ($courses as $c): ?>
+                                        <option value="<?= $c['co_id'] ?>"><?= htmlspecialchars($c['co_name']) ?></option>
+                                    <?php endforeach;
+                                } catch (Exception $e) {
+                                    echo "<option value=''>Error loading courses: " . htmlspecialchars($e->getMessage()) . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category_id" class="form-label">Category:</label>
+                            <select name="category_id" id="category_id" class="form-select" required>
+                                <option value="">Select course first</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="num_questions" class="form-label">Number of Questions:</label>
+                            <div class="input-group">
+                                <input type="number" id="num_questions" class="form-control" min="1" max="20" value="5" onkeydown="handleNumberInput(event)">
+                                <button type="button" class="btn btn-outline-secondary" onclick="buildQuestionSlots()">➕ Load Questions</button>
+                            </div>
+                        </div>
+
+                        <div id="questionSlots" class="mb-3"></div>
+                        <input type="hidden" name="questions[]" id="question_ids">
+
+                        <div class="d-grid">
+                            <button type="submit" id="submitButton" class="btn btn-success">Create Exam</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted text-center">
+                    <small>MatematikProvGenerator - Exam Creation Tool</small>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<form id="examForm" method="POST">
-    <label for="exam_name">Exam Name:</label>
-    <input type="text" name="exam_name" id="exam_name" required placeholder="Enter exam name"><br><br>
-
-    <label for="course_id">Course:</label>
-    <select name="course_id" id="course_id" required onchange="loadCategories()">
-        <option value="">Select course</option>
-        <?php
-        try {
-            $courses = $mysqli->query("SELECT co_id, co_name FROM courses ORDER BY co_name");
-            if (!$courses) {
-                throw new Exception("Error fetching courses: " . $mysqli->error);
-            }
-            foreach ($courses as $c): ?>
-                <option value="<?= $c['co_id'] ?>"><?= htmlspecialchars($c['co_name']) ?></option>
-            <?php endforeach;
-        } catch (Exception $e) {
-            echo "<option value=''>Error loading courses: " . htmlspecialchars($e->getMessage()) . "</option>";
-        }
-        ?>
-    </select><br><br>
-
-    <label for="category_id">Category:</label>
-    <select name="category_id" id="category_id" required>
-        <option value="">Select course first</option>
-    </select><br><br>
-
-    <label for="num_questions">Number of Questions:</label>
-    <input type="number" id="num_questions" min="1" max="20" value="5" onkeydown="handleNumberInput(event)">
-    <button type="button" onclick="buildQuestionSlots()">➕ Load Questions</button><br><br>
-
-    <div id="questionSlots"></div>
-    <input type="hidden" name="questions[]" id="question_ids"><br>
-    <button type="submit" id="submitButton">✅ Create Exam</button>
-</form>
 
 <script>
 // Only define questionTypes if available from server
@@ -289,7 +316,7 @@ function loadCategories() {
         .catch(err => {
             console.error("Loading categories failed:", err);
             document.getElementById('category_id').innerHTML = "<option value=''>Error loading categories</option>";
-            alert("❌ Could not load categories: " + err.message);
+            alert("Could not load categories: " + err.message);
         });
 }
 
@@ -381,11 +408,9 @@ function fetchQuestion(index) {
     }
 
     const preview = document.getElementById(`preview-${index}`);
-    preview.innerHTML = "<em>Loading question...</em>";
+    preview.innerHTML = "Loading question...";
 
     const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&question_type=${qtId}&difficulty=${difficulty}`;
-    
-    console.log(`Fetching question with: ${url}`);
     
     fetch(url)
         .then(res => {
@@ -395,22 +420,17 @@ function fetchQuestion(index) {
             return res.json();
         })
         .then(data => {
-            // Show debug info if available
-            if (data.debug) {
-                showDebug(data.debug);
-            }
-            
             if (data && data.qu_id) {
                 questionData[index] = data.qu_id;
                 preview.innerHTML = `<em>${data.text}</em>`;
             } else {
                 questionData[index] = null;
-                preview.innerHTML = `<span style='color:red;'>❌ ${data.error || 'No question found'}</span>`;
+                preview.innerHTML = `<span style='color:red;'>${data.error || 'No question found'}</span>`;
             }
         })
         .catch(err => {
             console.error("Loading question failed:", err);
-            preview.innerHTML = `<span style='color:red;'>❌ Error: ${err.message}</span>`;
+            preview.innerHTML = `<span style='color:red;'>Error: ${err.message}</span>`;
         });
 }
 
