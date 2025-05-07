@@ -64,11 +64,10 @@ if (isset($_GET['action'])) {
 
         if ($_GET['action'] === 'get_random_question') {
             $categoryId = (int) $_GET['category_id'];
-            $questionType = (int) $_GET['question_type'];
             $courseId = isset($_GET['course_id']) ? (int) $_GET['course_id'] : 0;
             $difficulty = isset($_GET['difficulty']) ? (int) $_GET['difficulty'] : 0;
 
-            if ($categoryId <= 0 || $questionType <= 0) {
+            if ($categoryId <= 0) {
                 echo json_encode(['error' => 'Missing or invalid parameters']);
                 exit;
             }
@@ -77,7 +76,6 @@ if (isset($_GET['action'])) {
             $debug = [
                 'params' => [
                     'category_id' => $categoryId,
-                    'question_type' => $questionType,
                     'course_id' => $courseId,
                     'difficulty' => $difficulty
                 ]
@@ -85,22 +83,22 @@ if (isset($_GET['action'])) {
 
             // Build SQL based on whether difficulty is specified
             if ($difficulty > 0) {
-                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND qt_id = ? AND difficulty = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
+                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND difficulty = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
                 $stmt = $mysqli->prepare($sql);
                 if (!$stmt) {
                     echo json_encode(['error' => 'DB prepare error: ' . $mysqli->error, 'debug' => $debug]);
                     exit;
                 }
-                $stmt->bind_param("iii", $categoryId, $questionType, $difficulty);
+                $stmt->bind_param("ii", $categoryId, $difficulty);
                 $debug['sql'] = $sql;
             } else {
-                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND qt_id = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
+                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
                 $stmt = $mysqli->prepare($sql);
                 if (!$stmt) {
                     echo json_encode(['error' => 'DB prepare error: ' . $mysqli->error, 'debug' => $debug]);
                     exit;
                 }
-                $stmt->bind_param("ii", $categoryId, $questionType);
+                $stmt->bind_param("i", $categoryId);
                 $debug['sql'] = $sql;
             }
 
@@ -110,9 +108,9 @@ if (isset($_GET['action'])) {
             
             if ($result->num_rows === 0) {
                 // Check if ANY questions exist for this category and type
-                $checkSql = "SELECT COUNT(*) as count FROM questions WHERE ca_id = ? AND qt_id = ? AND is_active = 1";
+                $checkSql = "SELECT COUNT(*) as count FROM questions WHERE ca_id = ? AND is_active = 1";
                 $checkStmt = $mysqli->prepare($checkSql);
-                $checkStmt->bind_param("ii", $categoryId, $questionType);
+                $checkStmt->bind_param("i", $categoryId);
                 $checkStmt->execute();
                 $countResult = $checkStmt->get_result()->fetch_assoc();
                 
@@ -123,9 +121,9 @@ if (isset($_GET['action'])) {
                         'debug' => $debug
                     ]);
                 } else {
-                    // No questions at all for this category and type
+                    // No questions at all for this category
                     echo json_encode([
-                        'error' => 'No questions found for the selected category and question type.',
+                        'error' => 'No questions found for the selected category.',
                         'debug' => $debug
                     ]);
                 }
@@ -255,7 +253,7 @@ if (!empty($statusMessage)) {
                         <div class="mb-3">
                             <label for="num_questions" class="form-label">Number of Questions:</label>
                             <div class="input-group">
-                                <input type="number" id="num_questions" class="form-control" min="1" max="20" value="5" onkeydown="handleNumberInput(event)">
+                                <input type="number" id="num_questions" class="form-control" min="1" max="20" value="6" onkeydown="handleNumberInput(event)">
                                 <button type="button" class="btn btn-outline-secondary" onclick="buildQuestionSlots()">➕ Load Questions</button>
                             </div>
                         </div>
@@ -277,6 +275,10 @@ if (!empty($statusMessage)) {
 </div>
 
 <script>
+// Default values
+const defaultNumQuestions = 6; // Default to 6 questions
+const defaultDifficulties = [1, 2, 3, 4, 5, 6]; // Default difficulties from 1 to 6
+
 // Only define questionTypes if available from server
 const questionTypes = <?= json_encode($questionTypesArray ?? []) ?>;
 let questionData = [];
@@ -320,16 +322,12 @@ function loadCategories() {
         });
 }
 
+// Build question slots with default settings (6 questions and difficulty from 1 to 6)
 function buildQuestionSlots() {
-    const count = parseInt(document.getElementById('num_questions').value);
-    if (isNaN(count) || count < 1 || count > 20) {
-        alert("Please enter a number between 1 and 20.");
-        return;
-    }
-
+    const count = defaultNumQuestions; // Use default number of questions (6)
     const courseId = document.getElementById('course_id').value;
     const categoryId = document.getElementById('category_id').value;
-    
+
     if (!courseId || !categoryId) {
         alert("Please select both course and category first.");
         return;
@@ -339,6 +337,7 @@ function buildQuestionSlots() {
     container.innerHTML = '';
     questionData = Array(count).fill(null);
 
+    // Loop through and create 6 question slots
     for (let i = 0; i < count; i++) {
         const wrapper = document.createElement('div');
         wrapper.id = `question-block-${i}`;
@@ -347,24 +346,19 @@ function buildQuestionSlots() {
         wrapper.style.border = "1px solid #ddd";
         wrapper.style.borderRadius = "5px";
 
-        const typeSelect = document.createElement('select');
-        typeSelect.name = `qt_select_${i}`;
-        typeSelect.innerHTML = questionTypes.map(qt => `<option value="${qt.qt_id}">${qt.qt_name}</option>`).join('');
-        typeSelect.onchange = () => fetchQuestion(i);
-        
-        // Create difficulty select
+        // Create difficulty select and pre-set it to the corresponding difficulty level (1 to 6)
         const difficultySelect = document.createElement('select');
         difficultySelect.name = `difficulty_select_${i}`;
         difficultySelect.innerHTML = `
-            <option value="0">Any difficulty</option>
-            <option value="1">Difficulty 1</option>
-            <option value="2">Difficulty 2</option>
-            <option value="3">Difficulty 3</option>
-            <option value="4">Difficulty 4</option>
-            <option value="5">Difficulty 5</option>
-            <option value="6">Difficulty 6</option>
+            <option value="0">Any</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
         `;
-        difficultySelect.onchange = () => fetchQuestion(i);
+        difficultySelect.value = defaultDifficulties[i]; // Set default difficulty to 1 through 6   
         difficultySelect.style.marginLeft = "10px";
 
         const preview = document.createElement('div');
@@ -382,27 +376,34 @@ function buildQuestionSlots() {
         rerollBtn.style.marginTop = "5px";
 
         wrapper.innerHTML = `<strong>Question ${i + 1}</strong><br>`;
-        wrapper.appendChild(typeSelect);
+        const difficultyLabel = document.createElement('p');
+        difficultyLabel.innerText = "Frågetyp:";
+        wrapper.appendChild(difficultyLabel);
         wrapper.appendChild(difficultySelect);
+
         wrapper.appendChild(document.createElement('br'));
         wrapper.appendChild(preview);
         wrapper.appendChild(document.createElement('br'));
         wrapper.appendChild(rerollBtn);
 
         container.appendChild(wrapper);
-        
+
         // Auto-fetch a question when the slot is created
         setTimeout(() => fetchQuestion(i), 100 * (i + 1)); // Stagger requests to prevent overloading
     }
 }
 
+// Update the form's question count to default to 6
+document.getElementById('num_questions').value = defaultNumQuestions;
+
+
+
 function fetchQuestion(index) {
     const courseId = document.getElementById('course_id').value;
     const categoryId = document.getElementById('category_id').value;
-    const qtId = document.querySelector(`[name=qt_select_${index}]`).value;
     const difficulty = document.querySelector(`[name=difficulty_select_${index}]`).value;
     
-    if (!courseId || !categoryId || !qtId) {
+    if (!courseId || !categoryId) {
         document.getElementById(`preview-${index}`).innerHTML = "<span style='color:#f70;'>⚠️ Please select course and category first</span>";
         return;
     }
@@ -410,7 +411,7 @@ function fetchQuestion(index) {
     const preview = document.getElementById(`preview-${index}`);
     preview.innerHTML = "Loading question...";
 
-    const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&question_type=${qtId}&difficulty=${difficulty}`;
+    const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}`;
     
     fetch(url)
         .then(res => {
@@ -433,25 +434,6 @@ function fetchQuestion(index) {
             preview.innerHTML = `<span style='color:red;'>Error: ${err.message}</span>`;
         });
 }
-
-document.getElementById('examForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    const validIds = questionData.filter(q => q !== null && !isNaN(q));
-    if (validIds.length === 0) {
-        alert("❌ No valid questions loaded. Please use 'Load Questions' first.");
-        return false;
-    }
-    
-    document.getElementById('question_ids').value = validIds.join(',');
-    this.submit();
-});
-
-function handleNumberInput(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        buildQuestionSlots();
-        return false;
-    }
-}
 </script>
+
+<?php require_once "include/footer.php"; ?>
