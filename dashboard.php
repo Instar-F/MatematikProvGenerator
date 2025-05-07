@@ -55,6 +55,16 @@ if (!$result) {
                                 <i class="bi bi-people"></i> User Management
                             </a>
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="add-course.php" class="btn btn-outline-primary btn-lg w-100">
+                                <i class="bi bi-person-plus"></i> Add Course
+                            </a>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <a href="add-category.php" class="btn btn-outline-success btn-lg w-100">
+                                <i class="bi bi-question-circle"></i> Add Category
+                            </a>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer text-center">
