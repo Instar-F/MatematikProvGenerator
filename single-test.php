@@ -60,60 +60,85 @@ $currentPage = 'test-list.php';
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-k6RqeWeci5ZR/Lv4MR0sA0FfDOM8V0y5z5l5Z5l5Z5l5Z5l5Z5l5Z5l5Z5l5Z5" crossorigin="anonymous">
+
     <style>
         body {
             background-color: #eaeaea;
             font-family: sans-serif;
         }
 
-        .main-wrapper {
+        .container-fluid {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        .row {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            gap: 2rem;
-            padding: 2rem;
             flex-wrap: wrap;
+            margin: 0 -15px;
         }
 
-        .left-panel {
-            background-color: white;
-            width: 794px; /* A4 width */
-            min-height: 1123px; /* A4 height */
-            padding: 2rem;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border: 1px solid #ccc;
-            border-radius: 6px;
+        .col-md-4, .col-md-8 {
+            padding: 0 15px;
         }
 
-        .right-panel {
-            flex: 1;
-            max-width: 400px;
-            background: #fff;
+        .sidebar-container {
+            background-color: #fff;
             padding: 1.5rem;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             border-radius: 6px;
-            overflow-y: auto;
-            max-height: 1123px;
             margin-top: 1rem;
         }
 
-        .exam-header {
-            display: flex;
-            justify-content: space-between;
+        .card {
+            background-color: #fff;
+            border: none;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
-            font-size: 1.1rem;
         }
 
-        .question {
-            margin-bottom: 2.5rem;
-            font-size: 1.05rem;
-            page-break-inside: avoid;
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem;
+            text-align: center;
         }
 
-        .question .points {
-            text-align: right;
-            margin-top: 0.5rem;
-            font-weight: bold;
+        .card-header-centered {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .fw-bold {
+            font-weight: 700;
+        }
+
+        .fs-3 {
+            font-size: 1.75rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mt-5 {
+            margin-top: 3rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 1rem;
         }
 
         .answers-section {
@@ -121,7 +146,7 @@ $currentPage = 'test-list.php';
             margin-top: 2rem;
         }
 
-        .answers-section h4 {
+        .answers-section-title {
             margin-bottom: 1.5rem;
             font-size: 1.2rem;
             text-align: center;
@@ -132,13 +157,13 @@ $currentPage = 'test-list.php';
             margin-bottom: 1rem;
         }
 
-        .answer-item h5 {
+        .answer-item-title {
             margin-bottom: 0.5rem;
             font-size: 1.1rem;
             color: #444;
         }
 
-        .answer-item div {
+        .answer-item-content {
             font-size: 1rem;
             line-height: 1.5;
         }
@@ -169,12 +194,30 @@ $currentPage = 'test-list.php';
                 background: white;
             }
 
-            .main-wrapper {
+            .container-fluid {
+                padding: 0;
+            }
+
+            .sidebar-container {
+                display: none;
+            }
+
+            .card {
+                margin: 0;
+                border: none;
+                box-shadow: none;
+            }
+
+            .card-body {
+                padding: 0;
+            }
+
+            .test-preview-wrapper {
                 display: block;
                 padding: 0;
             }
 
-            .left-panel {
+            .test-preview-left-panel {
                 width: 100%;
                 box-shadow: none;
                 border: none;
@@ -182,7 +225,7 @@ $currentPage = 'test-list.php';
                 margin: 0;
             }
 
-            .right-panel {
+            .test-preview-right-panel {
                 display: none;
             }
         }
@@ -190,69 +233,62 @@ $currentPage = 'test-list.php';
 </head>
 <body>
 
-<div class="container-fluid mt-5">
+<div class="container-fluid">
     <div class="row">
         <!-- Sidebar with links -->
-        <div class="col-md-4 ps-0">
+        <div class="col-md-4 sidebar-container">
             <?php require_once "sidebar.php"; ?>
         </div>
         <!-- Main content -->
         <div class="col-md-8">
-            <div class="container mt-5 no-print">
-                <div class="row justify-content-center">
-                    <div class="col-md-8">
-                        <div class="card shadow-lg p-4">
-                            <h2 class="text-center mb-4">Test Details</h2>
-                            <div class="mb-3"><h4>Test Name:</h4><p><?= htmlspecialchars($test['ex_name']) ?></p></div>
-                            <div class="mb-3"><h4>Created By:</h4><p><?= htmlspecialchars($test['u_uname']) ?></p></div>
-                            <div class="mb-3"><h4>Created At:</h4><p><?= htmlspecialchars($test['created_at']) ?></p></div>
-                            <button class="btn btn-primary mt-3" onclick="window.print()">Skriv ut</button>
-                        </div>
-                    </div>
+            <div class="card card-shadow">
+                <div class="card-header card-header-centered">
+                    <h1>Test Preview</h1>
                 </div>
-            </div>
-
-            <div class="main-wrapper">
-                <div class="left-panel">
-                    <div class="exam-header">
-                        <div>
-                            <strong><?= htmlspecialchars($test['ex_name']) ?></strong><br>
-                            <strong>Namn:</strong> __________________
-                        </div>
-                        <div>
-                            <strong>Poäng:</strong> ________/36p<br>
-                            <strong>Vitsord:</strong>
-                        </div>
-                    </div>
-
-                    <?php if (!empty($questions)): ?>
-                        <?php foreach ($questions as $index => $question): ?>
-                            <div class="question">
-                                <div><strong>Uppgift <?= $index + 1 ?>:</strong></div>
-                                <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
-                                <div class="points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
+                <div class="card-body">
+                    <div class="test-preview-wrapper">
+                        <div class="test-preview-left-panel">
+                            <div class="exam-header">
+                                <div>
+                                    <strong><?= htmlspecialchars($test['ex_name']) ?></strong><br>
+                                    <strong>Name:</strong> __________________
+                                </div>
+                                <div>
+                                    <strong>Points:</strong> ________/36p<br>
+                                    <strong>Grade:</strong>
+                                </div>
                             </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="alert alert-warning text-center">Inga frågor hittades för detta prov.</div>
-                    <?php endif; ?>
-                </div>
 
-                <div class="right-panel no-print">
-                    <div class="answers-section">
-                        <h4>Svar</h4>
-                        <?php if (!empty($questions)): ?>
-                            <?php foreach ($questions as $index => $question): ?>
-                                <?php if (!empty($question['answer'])): ?>
-                                    <div class="answer-item">
-                                        <h5>Uppgift <?= $index + 1 ?>:</h5>
-                                        <div><?= nl2br(strip_tags($question['answer'], '<br><ul><ol><li><strong><em>')) ?></div>
+                            <?php if (!empty($questions)): ?>
+                                <?php foreach ($questions as $index => $question): ?>
+                                    <div class="question-item">
+                                        <div><strong>Question <?= $index + 1 ?>:</strong></div>
+                                        <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                        <div class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
                                     </div>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <div class="alert alert-warning text-center">No questions found for this test.</div>
+                            <?php endif; ?>
+                        </div>
+
+                        <div class="test-preview-right-panel no-print">
+                            <div class="answers-section">
+                                <h4 class="answers-section-title">Answers</h4>
+                                <?php if (!empty($questions)): ?>
+                                    <?php foreach ($questions as $index => $question): ?>
+                                        <?php if (!empty($question['answer'])): ?>
+                                            <div class="answer-item">
+                                                <h5 class="answer-item-title">Question <?= $index + 1 ?>:</h5>
+                                                <div class="answer-item-content"><?= nl2br(strip_tags($question['answer'], '<br><ul><ol><li><strong><em>')) ?></div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <p>No answers available.</p>
                                 <?php endif; ?>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <p>Inga svar tillgängliga.</p>
-                        <?php endif; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

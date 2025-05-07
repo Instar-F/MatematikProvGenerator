@@ -1,15 +1,216 @@
-/* Print Media Queries */
-@media print {
-    body {
-        margin: 0 !important;
-    }
-}
-
+/* General Styling */
 body {
     margin: 0;
     padding: 0;
     font-family: 'Lato', sans-serif;
     background-color: #f4f4f4;
+}
+
+.container-fluid {
+    margin-top: 5rem;
+}
+
+/* Sidebar Styling */
+.sidebar-container {
+    padding-left: 0;
+}
+
+/* Card Styling */
+.card-header-centered {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.75rem;
+}
+
+.card-shadow {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+}
+
+/* Card Header Styling */
+.card-header {
+    padding: 1rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+    background-color: #007bff; /* Add a primary background color */
+    color: white; /* Ensure text is readable */
+    border-radius: 6px 6px 0 0; /* Rounded corners for the top of the card */
+}
+
+/* Centered Headers */
+.text-center {
+    text-align: center;
+}
+
+/* Centered and Bold Headers */
+.centered-header {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Page Title */
+.page-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+}
+
+/* Form Styling */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-control {
+    padding: 0.5rem;
+    font-size: 1rem;
+}
+
+.btn {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+}
+
+/* Delete User Styling */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    border-color: #bd2130;
+}
+
+/* Print Media Queries */
+@media print {
+    body {
+        margin: 0 !important;
+        background: white;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-wrapper {
+        display: block;
+        padding: 0;
+    }
+
+    .print-panel {
+        width: 100%;
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+    }
+}
+
+/* Test Preview Styling */
+.test-preview-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 2rem;
+    flex-wrap: wrap;
+}
+
+.test-preview-left-panel {
+    background-color: white;
+    width: 794px; /* A4 width */
+    min-height: 1123px; /* A4 height */
+    padding: 2rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.test-preview-right-panel {
+    flex: 1;
+    max-width: 400px;
+    background: #fff;
+    padding: 1.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow-y: auto;
+    max-height: 1123px;
+    margin-top: 1rem;
+}
+
+.exam-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.question-item {
+    margin-bottom: 2.5rem;
+    font-size: 1.05rem;
+    page-break-inside: avoid;
+}
+
+.question-points {
+    text-align: right;
+    margin-top: 0.5rem;
+    font-weight: bold;
+}
+
+.answers-section {
+    padding: 1rem;
+    margin-top: 2rem;
+}
+
+.answers-section-title {
+    margin-bottom: 1.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    color: #333;
+}
+
+.answer-item {
+    margin-bottom: 1rem;
+}
+
+.answer-item-title {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    color: #444;
+}
+
+.answer-item-content {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Image Styling */
+.img-fluid {
+    max-height: 200px;
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* MathJax Formula Styling */
+.mathjax-formula {
+    font-weight: normal;
+    font-family: sans-serif;
+}
+
+.mathjax-formula span {
+    font-weight: normal;
 }
 
 /* General Layout */
@@ -67,9 +268,53 @@ footer a:hover {
     background: #f9f9f9;
 }
 
-/* Image Styling */
-img {
+/* Image Preview */
+.image-preview img {
+    max-height: 200px;
     max-width: 100%;
     height: auto;
     display: block;
+}
+
+/* Question Slots Styling */
+.question-slots {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.question-block {
+    margin-bottom: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.question-preview {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.reroll-btn {
+    margin-top: 5px;
+}
+
+/* Dashboard Styling */
+.dashboard-welcome {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.dashboard-description {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.dashboard-footer {
+    font-size: 0.875rem;
+    color: #6c757d;
 }

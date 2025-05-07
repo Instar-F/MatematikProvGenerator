@@ -82,7 +82,7 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
 <div class="container-fluid mt-5">
     <div class="row">
         <!-- Sidebar with links -->
-        <div class="col-md-4 ps-0">
+        <div class="col-md-4 sidebar-container">
             <?php
             $currentPage = $previousPage; // Use the previous page for highlighting
             require_once "sidebar.php";
@@ -91,7 +91,7 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
         <!-- Main content -->
         <div class="col-md-8">
             <div class="container py-5">
-                <h1 class="mb-4">Redigera Fråga</h1>
+                <h1 class="page-title">Redigera Fråga</h1>
 
                 <form method="post" enctype="multipart/form-data">
                     <div class="form-group mb-3">
@@ -134,8 +134,8 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
                     <div class="form-group mb-3">
                         <label for="image">Bild:</label>
                         <?php if (!empty($question['image_url'])): ?>
-                            <div class="mb-2">
-                                <img src="<?= htmlspecialchars($question['image_url']); ?>" alt="Question Image" class="img-fluid" style="max-height: 200px;">
+                            <div class="image-preview">
+                                <img src="<?= htmlspecialchars($question['image_url']); ?>" alt="Question Image" class="img-fluid">
                             </div>
                         <?php endif; ?>
                         <input type="file" name="image" id="image" class="form-control">

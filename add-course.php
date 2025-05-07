@@ -34,29 +34,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="container-fluid mt-5">
     <div class="row">
         <!-- Sidebar with links -->
-        <div class="col-md-4 ps-0">
+        <div class="col-md-4 sidebar-container">
             <?php require_once "sidebar.php"; ?>
         </div>
         <!-- Main content -->
         <div class="col-md-8">
             <div class="container mt-5">
-                <h1 class="mb-4">Add New Course</h1>
-                <?php if (!empty($successMessage)): ?>
-                    <div class="alert alert-success"><?php echo $successMessage; ?></div>
-                <?php elseif (!empty($errorMessage)): ?>
-                    <div class="alert alert-danger"><?php echo $errorMessage; ?></div>
-                <?php endif; ?>
-                <form method="POST" action="">
-                    <div class="mb-3">
-                        <label for="course_name" class="form-label">Course Name</label>
-                        <input type="text" class="form-control" id="course_name" name="course_name" required>
+                <div class="card shadow-lg">
+                    <div class="card-header">
+                        Add New Course
                     </div>
-                    <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    <div class="card-body">
+                        <?php if (!empty($successMessage)): ?>
+                            <div class="alert alert-success"><?= htmlspecialchars($successMessage); ?></div>
+                        <?php elseif (!empty($errorMessage)): ?>
+                            <div class="alert alert-danger"><?= htmlspecialchars($errorMessage); ?></div>
+                        <?php endif; ?>
+                        <form method="POST" action="">
+                            <div class="form-group mb-3">
+                                <label for="course_name" class="form-label">Course Name</label>
+                                <input type="text" class="form-control" id="course_name" name="course_name" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Course</button>
+                        </form>
                     </div>
-                    <button type="submit" class="btn btn-primary">Add Course</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>

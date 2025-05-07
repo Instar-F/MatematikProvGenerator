@@ -63,50 +63,58 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
         </div>
         <!-- Main content -->
         <div class="col-md-8">
-            <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Edit User</h2>
-                <form action="" method="POST" class="mb-4">
-                    <div class="mb-3">
-                        <label for="uname" class="form-label">Username:</label>
-                        <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="umail" class="form-label">Email:</label>
-                        <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="upass" class="form-label">Password:</label>
-                        <input type="password" id="upass" name="upass" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label for="upassrpt" class="form-label">Repeat Password:</label>
-                        <input type="password" id="upassrpt" name="upassrpt" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label for="urole" class="form-label">User Role:</label>
-                        <select id="urole" name="urole" class="form-select" required>
-                            <?php
-                            $currentRole = $currentUserInfo['data']['u_role_fk']; 
-                            foreach ($allUserRoles as $role) {
-                                $selected = ($role['r_id'] == $currentRole) ? 'selected' : ''; 
-                                echo "<option value='{$role['r_id']}' {$selected}>{$role['r_name']}</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-                    <div class="d-grid">
-                        <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
-                    </div>
-                </form>
+            <div class="card shadow-lg">
+                <div class="card-header text-center">
+                    <h1 class="fw-bold fs-3">Edit User</h1>
+                </div>
+                <div class="card-body">
+                    <form action="" method="POST" class="mb-4">
+                        <div class="form-group mb-3">
+                            <label for="uname" class="form-label">Username:</label>
+                            <input type="text" value="<?php echo $currentUserInfo['data']['u_uname']; ?>" id="uname" name="uname" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="umail" class="form-label">Email:</label>
+                            <input type="email" value="<?php echo $currentUserInfo['data']['u_mail']; ?>" id="umail" name="umail" class="form-control" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="upass" class="form-label">Password:</label>
+                            <input type="password" id="upass" name="upass" class="form-control">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="upassrpt" class="form-label">Repeat Password:</label>
+                            <input type="password" id="upassrpt" name="upassrpt" class="form-control">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="urole" class="form-label">User Role:</label>
+                            <select id="urole" name="urole" class="form-select" required>
+                                <?php
+                                $currentRole = $currentUserInfo['data']['u_role_fk']; 
+                                foreach ($allUserRoles as $role) {
+                                    $selected = ($role['r_id'] == $currentRole) ? 'selected' : ''; 
+                                    echo "<option value='{$role['r_id']}' {$selected}>{$role['r_name']}</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" name="edituser-submit" class="btn btn-primary">Edit</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card shadow-lg p-4 border-danger mt-4">
-                <h2 class="text-center text-danger mb-4">Delete User</h2>
-                <p class="text-center text-muted">
-                    Are you sure you want to delete this user? This action cannot be undone.
-                </p>
-                <form action="" method="POST" class="text-center">
-                    <button type="submit" name="deleteuser-submit" class="btn btn-danger btn-lg">Delete User</button>
-                </form>
+            <div class="card shadow-lg border-danger mt-4">
+                <div class="card-header text-center">
+                    <h1 class="fw-bold fs-3 text-danger">Delete User</h1>
+                </div>
+                <div class="card-body">
+                    <p class="text-center text-muted">
+                        Are you sure you want to delete this user? This action cannot be undone.
+                    </p>
+                    <form action="" method="POST" class="text-center">
+                        <button type="submit" name="deleteuser-submit" class="btn btn-danger btn-lg">Delete User</button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

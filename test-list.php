@@ -37,23 +37,20 @@ if(isset($_POST['searchuser-submit'])){
         </div>
         <!-- Main content -->
         <div class="col-md-8">
-            <div class="row justify-content-center">
-                <?php if(isset($_GET['deleteduser'])): ?>
-                <div class="user-feedback bg-success text-white m-4"><p class="text-center m-2">User was successfully deleted</p></div>
-                <?php endif; ?>
-                <div class="col-md-8"> <!-- Increased width from col-md-6 to col-md-8 -->
-                    <div class="card shadow-lg p-4">
-                        <h2 class="text-center mb-4">Test List</h2>
-                        <form action="" method="POST">
-                            <div class="mb-3">
-                                <label for="testname" class="form-label">Name</label>
-                                <input type="text" value="" id="testname" name="testname" class="form-control" required>
-                            </div>
-                            <div class="d-grid">
-                                <button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
-                            </div>
-                        </form>
-                    </div>
+            <div class="card shadow-lg">
+                <div class="card-header text-center">
+                    <h1 class="fw-bold fs-3">Test List</h1>
+                </div>
+                <div class="card-body">
+                    <form action="" method="POST">
+                        <div class="mb-3">
+                            <label for="testname" class="form-label">Name</label>
+                            <input type="text" value="" id="testname" name="testname" class="form-control" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
+                        </div>
+                    </form>
                 </div>
             </div>
             <div class="container mt-4">

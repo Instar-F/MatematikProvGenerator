@@ -28,7 +28,7 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
 <div class="container-fluid mt-5">
     <div class="row">
         <!-- Sidebar with links -->
-        <div class="col-md-4 ps-0">
+        <div class="col-md-4 sidebar-container">
             <?php require_once "sidebar.php"; ?>
         </div>
         <!-- Main content -->
@@ -40,11 +40,11 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
                     $courses = $pdo->query("SELECT * FROM matteprovgenerator.courses")->fetchAll(PDO::FETCH_ASSOC);
                 ?>
 
-                    <h1 class="mb-4">Select a Course</h1>
+                    <h1 class="centered-header">Select a Course</h1>
                     <div class="row">
                         <?php foreach ($courses as $course): ?>
                             <div class="col-md-4 mb-4">
-                                <div class="card h-100 shadow-sm" onclick="location.href='?course_id=<?= $course['co_id'] ?>'" style="cursor:pointer;">
+                                <div class="card course-card" onclick="location.href='?course_id=<?= $course['co_id'] ?>'">
                                     <div class="card-body">
                                         <h5 class="card-title"><?= htmlspecialchars($course['co_name']) ?></h5>
                                         <p class="card-text"><?= htmlspecialchars($course['description']) ?></p>
@@ -63,11 +63,11 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
                 ?>
 
                     <a href="assignments.php" class="btn btn-secondary mb-4">⬅️ Back to Courses</a>
-                    <h1 class="mb-4">Select a Category</h1>
+                    <h1 class="centered-header">Select a Category</h1>
                     <div class="row">
                         <?php foreach ($categories as $category): ?>
                             <div class="col-md-4 mb-4">
-                                <div class="card h-100 shadow-sm" onclick="location.href='?course_id=<?= $courseId ?>&category_id=<?= $category['ca_id'] ?>'" style="cursor:pointer;">
+                                <div class="card category-card" onclick="location.href='?course_id=<?= $courseId ?>&category_id=<?= $category['ca_id'] ?>'">
                                     <div class="card-body">
                                         <h5 class="card-title"><?= htmlspecialchars($category['ca_name']) ?></h5>
                                     </div>
@@ -85,7 +85,7 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
                 ?>
 
                     <a href="assignments.php?course_id=<?= $courseId ?>" class="btn btn-secondary mb-4">⬅️ Back to Categories</a>
-                    <h1 class="mb-4">Questions</h1>
+                    <h1 class="centered-header">Questions</h1>
                     <ul class="list-group">
                         <?php foreach ($questions as $question): ?>
                             <li class="list-group-item d-flex justify-content-between align-items-center">
