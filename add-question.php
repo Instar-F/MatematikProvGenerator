@@ -153,7 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
-document.getElementById('previewButton').addEventListener('click', function () {
+document.getElementById('previewButton').addEventListener('click', function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
     const formData = new FormData(document.getElementById('questionForm'));
     formData.append('preview', true);
 
