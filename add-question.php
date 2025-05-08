@@ -1,16 +1,14 @@
 <?php
 require_once "include/header.php";
-
-$courses = $pdo->query("SELECT co_id, co_name FROM courses")->fetchAll();
-$categories = $pdo->query("SELECT ca_id, ca_name, ca_co_fk FROM categories")->fetchAll();
-$questionTypes = $pdo->query("SELECT qt_id, qt_name FROM questiontypes")->fetchAll();
 ?>
 
 <div class="container-fluid mt-5">
     <div class="row">
+        <!-- Sidebar with links -->
         <div class="col-md-4 ps-0">
             <?php require_once "sidebar.php"; ?>
         </div>
+        <!-- Main content -->
         <div class="col-md-8">
             <div class="card shadow-lg p-4 mb-5">
                 <h2 class="mb-4 text-center">Matematisk Frågeredigerare</h2>
@@ -46,90 +44,95 @@ $questionTypes = $pdo->query("SELECT qt_id, qt_name FROM questiontypes")->fetchA
                         </select>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="question">Fråga:</label>
-                        <textarea name="question" id="question" class="form-control"></textarea>
+                <form method="post" enctype="multipart/form-data">
+                    <!-- Fråga -->
+                    <div class="mb-3">
+                        <label for="question" class="form-label">Fråga:</label>
+                        <textarea name="question" id="question" class="form-control" rows="5"></textarea>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="answer">Svar:</label>
-                        <textarea name="answer" id="answer" class="form-control"></textarea>
+                    <!-- Svar -->
+                    <div class="mb-3">
+                        <label for="answer" class="form-label">Svar:</label>
+                        <textarea name="answer" id="answer" class="form-control" rows="5"></textarea>
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="image">Ladda upp en bild:</label>
+                    <!-- Bild -->
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Ladda upp en bild:</label>
                         <input type="file" name="image" id="image" class="form-control">
                     </div>
 
-                    <div class="form-group mb-3">
-                        <label for="total_points">Poäng för frågan:</label>
-                        <input type="number" name="total_points" id="total_points" class="form-control" min="0" step="1" required>
+                    <!-- Poäng -->
+                    <div class="mb-3">
+                        <label for="points" class="form-label">Poäng för frågan:</label>
+                        <input type="number" name="points" id="points" class="form-control">
                     </div>
 
-                    <div class="form-group mb-4">
-                        <label for="difficulty">Svårighetsgrad (1-6):</label>
-                        <input type="number" name="difficulty" id="difficulty" class="form-control" min="1" max="6" step="1" required>
+                    <!-- Svårighetsgrad -->
+                    <div class="mb-3">
+                        <label for="difficulty" class="form-label">Svårighetsgrad (1-6):</label>
+                        <input type="number" name="difficulty" id="difficulty" class="form-control" min="1" max="6">
                     </div>
 
-                    <div class="d-flex justify-content-between">
+                    <!-- Buttons -->
+                    <div class="mb-4">
                         <button type="button" id="previewButton" class="btn btn-primary">Förhandsgranska</button>
                         <button type="submit" name="save" class="btn btn-success">Spara till databas</button>
                     </div>
                 </form>
-            </div>
 
-            <!-- Preview Section -->
-            <div class="card shadow-lg p-4 mt-5 d-none" id="previewCard">
-                <h2 class="mb-4 text-center">Förhandsgranskning</h2>
-                <div class="preview">
-                    <div id="previewError" class="alert alert-danger d-none">Du måste skriva något i antingen frågan eller svaret för att förhandsgranska.</div>
-
-                    <h3>Fråga:</h3>
-                    <div id="previewQuestion"></div>
-                    <br>
-                    <h3>Svar:</h3>
-                    <div id="previewAnswer"></div>
+                <!-- Preview Section -->
+                <div id="previewSection" class="card shadow-lg p-4 mt-5" style="display: none;">
+                    <h2 class="mb-4 text-center">Förhandsgranskning</h2>
+                    <div id="previewError" class="alert alert-danger" style="display: none;">
+                        Du måste skriva något i antingen frågan eller svaret för att förhandsgranska.
+                    </div>
+                    <div class="preview">
+                        <h3>Fråga:</h3>
+                        <div id="previewQuestion"></div>
+                        <br>
+                        <h3>Svar:</h3>
+                        <div id="previewAnswer"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MathJax -->
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 <script>
-document.getElementById('previewButton').addEventListener('click', function () {
-    const question = document.getElementById('question').value.trim();
-    const answer = document.getElementById('answer').value.trim();
-    const previewCard = document.getElementById('previewCard');
-    const previewQuestion = document.getElementById('previewQuestion');
-    const previewAnswer = document.getElementById('previewAnswer');
-    const previewError = document.getElementById('previewError');
+    CKEDITOR.replace('question');
+    CKEDITOR.replace('answer');
 
-    if (question === '' && answer === '') {
-        previewCard.classList.remove('d-none');
-        previewError.classList.remove('d-none');
-        previewQuestion.innerHTML = '';
-        previewAnswer.innerHTML = '';
-    } else {
-        previewError.classList.add('d-none');
-        previewCard.classList.remove('d-none');
-        previewQuestion.textContent = question;
-        previewAnswer.textContent = answer;
-        MathJax.typeset(); // Render math
-    }
-});
-</script>
+    document.getElementById('previewButton').addEventListener('click', function () {
+        const questionEditor = CKEDITOR.instances.question;
+        const answerEditor = CKEDITOR.instances.answer;
 
-<script type="importmap">
-{
-    "imports": {
-        "ckeditor5": "./ckeditor5/ckeditor5.js",
-        "ckeditor5/": "./ckeditor5/"
-    }
-}
+        const question = questionEditor.getData().trim();
+        const answer = answerEditor.getData().trim();
+
+        const previewSection = document.getElementById('previewSection');
+        const previewError = document.getElementById('previewError');
+        const previewQuestion = document.getElementById('previewQuestion');
+        const previewAnswer = document.getElementById('previewAnswer');
+
+        if (!question && !answer) {
+            previewSection.style.display = 'block';
+            previewError.style.display = 'block';
+            previewQuestion.innerHTML = '';
+            previewAnswer.innerHTML = '';
+        } else {
+            previewError.style.display = 'none';
+            previewQuestion.innerHTML = question;
+            previewAnswer.innerHTML = answer;
+            previewSection.style.display = 'block';
+
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+    });
 </script>
-<script type="module" src="./main.js"></script>
 
 <?php require_once "include/footer.php"; ?>
