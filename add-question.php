@@ -126,35 +126,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
                 </form>
             </div>
 
-            <!-- Preview container -->
-            <div class="preview-container mt-4"></div>
+            <!-- Dynamic preview container -->
+            <div class="preview-container"></div>
         </div>
     </div>
 </div>
 
 <script>
 document.getElementById('previewButton').addEventListener('click', function () {
-    const question = document.getElementById('question').value.trim();
-    const answer = document.getElementById('answer').value.trim();
+    let question = document.getElementById('question').value;
+    let answer = document.getElementById('answer').value;
+
     const container = document.querySelector('.preview-container');
-
-    container.innerHTML = ""; // Clear previous content
-
-    if (!question && !answer) {
-        container.innerHTML = `
-            <div class="alert alert-warning">
-                Du måste fylla i antingen en fråga, ett svar, eller båda för att förhandsgranska.
-            </div>
-        `;
-        return;
-    }
-
     container.innerHTML = `
-        <div class="card shadow-lg p-4">
+        <div class="card shadow-lg p-4 mt-5">
             <h2 class="mb-4 text-center">Förhandsgranskning</h2>
             <div class="preview">
-                ${question ? `<h3>Fråga:</h3><div>${escapeHtml(question)}</div><br>` : ""}
-                ${answer ? `<h3>Svar:</h3><div>${escapeHtml(answer)}</div>` : ""}
+                <h3>Fråga:</h3>
+                <div>${escapeHtml(question)}</div>
+                <br>
+                <h3>Svar:</h3>
+                <div>${escapeHtml(answer)}</div>
             </div>
         </div>
     `;
@@ -167,7 +159,7 @@ function escapeHtml(str) {
 }
 </script>
 
-<!-- Import CKEditor (optional if you're using it in main.js) -->
+<!-- Import CKEditor -->
 <script type="importmap">
 {
     "imports": {
