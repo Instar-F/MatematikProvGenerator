@@ -51,7 +51,7 @@ try {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container-fluid mt-5">
+<div class="container-fluid mt-5 pb-5">
     <div class="row">
         <!-- Sidebar with links -->
         <div class="col-md-4 ps-0">

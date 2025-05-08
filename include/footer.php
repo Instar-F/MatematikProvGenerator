@@ -1,4 +1,4 @@
-<div class="footer py-4">
+<div class="footer py-4 mt-5">
             <p>&copy; <?php echo date("Y"); ?> Axxell Ab. All rights reserved.</p>
             <div>
                 <a href="/privacy-policy" class="text-white mx-3">Privacy Policy</a>

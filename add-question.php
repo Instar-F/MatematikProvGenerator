@@ -5,50 +5,59 @@ $courses = $pdo->query("SELECT co_id, co_name FROM courses")->fetchAll();
 $categories = $pdo->query("SELECT ca_id, ca_name, ca_co_fk FROM categories")->fetchAll();
 $questionTypes = $pdo->query("SELECT qt_id, qt_name FROM questiontypes")->fetchAll();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
-    $question = $_POST['question'] ?? '';
-    $answer = $_POST['answer'] ?? '';
-    $ca_id = $_POST['ca_id'] ?? '';
-    $qt_id = $_POST['qt_id'] ?? '';
-    $total_points = $_POST['total_points'] ?? '';
-    $difficulty = $_POST['difficulty'] ?? '';
-    $co_id = $_POST['co_id'] ?? '';
-    $image_url = null;
+$previewQuestion = '';
+$previewAnswer = '';
 
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = __DIR__ . '/uploads/';
-        $webPathBase = 'uploads/';
-        $tmpFile = $_FILES['image']['tmp_name'];
-        $originalName = $_FILES['image']['name'];
-        $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $fileType = mime_content_type($tmpFile);
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['preview'])) {
+        // Handle preview functionality
+        $previewQuestion = $_POST['question'] ?? '';
+        $previewAnswer = $_POST['answer'] ?? '';
+    } elseif (isset($_POST['save'])) {
+        $question = $_POST['question'] ?? '';
+        $answer = $_POST['answer'] ?? '';
+        $ca_id = $_POST['ca_id'] ?? '';
+        $qt_id = $_POST['qt_id'] ?? '';
+        $total_points = $_POST['total_points'] ?? '';
+        $difficulty = $_POST['difficulty'] ?? '';
+        $co_id = $_POST['co_id'] ?? '';
+        $image_url = null;
 
-        if (in_array($fileType, $allowedTypes) && in_array($fileExt, $allowedExts)) {
-            $uniqueName = uniqid('img_', true) . '.' . $fileExt;
-            $uploadFile = $uploadDir . $uniqueName;
-            $webPath = $webPathBase . $uniqueName;
-            if (move_uploaded_file($tmpFile, $uploadFile)) {
-                $image_url = $webPath;
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = __DIR__ . '/uploads/';
+            $webPathBase = 'uploads/';
+            $tmpFile = $_FILES['image']['tmp_name'];
+            $originalName = $_FILES['image']['name'];
+            $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            $fileType = mime_content_type($tmpFile);
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
+
+            if (in_array($fileType, $allowedTypes) && in_array($fileExt, $allowedExts)) {
+                $uniqueName = uniqid('img_', true) . '.' . $fileExt;
+                $uploadFile = $uploadDir . $uniqueName;
+                $webPath = $webPathBase . $uniqueName;
+                if (move_uploaded_file($tmpFile, $uploadFile)) {
+                    $image_url = $webPath;
+                } else {
+                    echo "<p class='alert alert-danger'>Failed to upload image.</p>";
+                }
             } else {
-                echo "<p class='alert alert-danger'>Failed to upload image.</p>";
+                echo "<p class='alert alert-danger'>Invalid file type. Only JPG, PNG, and GIF are allowed.</p>";
+            }
+        }
+
+        if (!empty($question) && !empty($answer) && !empty($ca_id) && !empty($qt_id) && is_numeric($total_points) && is_numeric($difficulty) && $difficulty >= 1 && $difficulty <= 6) {
+            try {
+                $stmt = $pdo->prepare("INSERT INTO questions (ca_id, qt_id, text, answer, image_url, total_points, difficulty, teacher_fk) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$ca_id, $qt_id, $question, $answer, $image_url, $total_points, $difficulty, $_SESSION['user']['id']]);
+                echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
+            } catch (Exception $e) {
+                echo "<p class='alert alert-danger'>Fel vid spara: " . $e->getMessage() . "</p>";
             }
         } else {
-            echo "<p class='alert alert-danger'>Invalid file type. Only JPG, PNG, and GIF are allowed.</p>";
+            echo "<p class='alert alert-warning'>Fyll i alla fält korrekt.</p>";
         }
-    }
-
-    if (!empty($question) && !empty($answer) && !empty($ca_id) && !empty($qt_id) && is_numeric($total_points) && is_numeric($difficulty) && $difficulty >= 1 && $difficulty <= 6) {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, qt_id, text, answer, image_url, total_points, difficulty, teacher_fk) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$ca_id, $qt_id, $question, $answer, $image_url, $total_points, $difficulty, $_SESSION['user']['id']]);
-            echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
-        } catch (Exception $e) {
-            echo "<p class='alert alert-danger'>Fel vid spara: " . $e->getMessage() . "</p>";
-        }
-    } else {
-        echo "<p class='alert alert-warning'>Fyll i alla fält korrekt.</p>";
     }
 }
 ?>
@@ -121,11 +130,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <button type="submit" name="preview" formaction="preview.php" class="btn btn-primary">Förhandsgranska</button>
+                        <button type="submit" name="preview" class="btn btn-primary">Förhandsgranska</button>
                         <button type="submit" name="save" class="btn btn-success">Spara till databas</button>
                     </div>
                 </form>
             </div>
+
+            <?php if (!empty($previewQuestion) || !empty($previewAnswer)): ?>
+                <div class="card shadow-lg p-4 mt-5">
+                    <h2 class="mb-4 text-center">Förhandsgranskning</h2>
+                    <div class="preview">
+                        <h3>Fråga:</h3>
+                        <div><?= htmlspecialchars($previewQuestion); ?></div>
+                        <br>
+                        <h3>Svar:</h3>
+                        <div><?= htmlspecialchars($previewAnswer); ?></div>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -150,6 +172,11 @@ function replaceDifficulty(event, input) {
         event.preventDefault();
     }
 }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script>
+    MathJax.typeset(); // Renders math expressions after load
 </script>
 
 <script type="importmap">
