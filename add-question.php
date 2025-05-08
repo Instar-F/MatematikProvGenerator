@@ -178,10 +178,14 @@ document.getElementById('previewButton').addEventListener('click', function () {
     })
     .catch(error => console.error('Error:', error));
 });
-</script>
 
-<script>
-    MathJax.typeset(); // Renders math expressions after load
+window.onload = function () {
+    if (typeof MathJax !== 'undefined') {
+        MathJax.typeset(); // Renders math expressions after load
+    } else {
+        console.error('MathJax is not loaded.');
+    }
+};
 </script>
 
 <script type="importmap">
