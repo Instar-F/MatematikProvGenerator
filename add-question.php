@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <button type="submit" name="preview" class="btn btn-primary">Förhandsgranska</button>
+                        <button type="button" id="previewButton" class="btn btn-primary">Förhandsgranska</button>
                         <button type="submit" name="save" class="btn btn-success">Spara till databas</button>
                     </div>
                 </form>
@@ -153,28 +153,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
-function filterCategories() {
-    const selectedCourse = document.getElementById('course').value;
-    const categoryOptions = document.querySelectorAll('#category option');
-    categoryOptions.forEach(option => {
-        option.style.display = option.dataset.course === selectedCourse || option.value === "" ? "block" : "none";
-    });
-    document.getElementById('category').value = "";
-}
+document.getElementById('previewButton').addEventListener('click', function () {
+    const formData = new FormData(document.getElementById('questionForm'));
+    formData.append('preview', true);
 
-function replaceDifficulty(event, input) {
-    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
-    if (!allowedKeys.includes(event.key) && !isNaN(event.key)) {
-        const newValue = parseInt(event.key, 10);
-        if (newValue >= 1 && newValue <= 6) {
-            input.value = newValue;
+    fetch('', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const previewCard = doc.querySelector('.preview');
+        if (previewCard) {
+            const existingPreview = document.querySelector('.preview');
+            if (existingPreview) {
+                existingPreview.parentNode.replaceChild(previewCard, existingPreview);
+            } else {
+                const container = document.querySelector('.col-md-8');
+                container.appendChild(previewCard.parentNode);
+            }
         }
-        event.preventDefault();
-    }
-}
+    })
+    .catch(error => console.error('Error:', error));
+});
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <script>
     MathJax.typeset(); // Renders math expressions after load
 </script>
