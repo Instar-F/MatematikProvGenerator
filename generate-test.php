@@ -56,19 +56,41 @@ if (isset($_GET['action'])) {
             $categoryId = (int) $_GET['category_id'];
             $courseId = isset($_GET['course_id']) ? (int) $_GET['course_id'] : 0;
             $difficulty = isset($_GET['difficulty']) ? (int) $_GET['difficulty'] : 0;
+            $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
             if ($categoryId <= 0) {
                 echo json_encode(['error' => 'Missing or invalid parameters']);
                 exit;
             }
 
-            $debug = [
-                'params' => [
-                    'category_id' => $categoryId,
-                    'course_id' => $courseId,
-                    'difficulty' => $difficulty
-                ]
-            ];
+            // --- SEARCH/LIST MODE ---
+            if (isset($_GET['list']) || $search !== '') {
+                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ?";
+                $params = [$categoryId];
+                $types = "i";
+                if ($difficulty > 0) {
+                    $sql .= " AND difficulty = ?";
+                    $params[] = $difficulty;
+                    $types .= "i";
+                }
+                if ($search !== '') {
+                    $sql .= " AND text LIKE ?";
+                    $params[] = "%$search%";
+                    $types .= "s";
+                }
+                $sql .= " AND is_active = 1 GROUP BY text ORDER BY RAND() LIMIT 5"; // <-- Add GROUP BY text to remove duplicates
+                $stmt = $mysqli->prepare($sql);
+                $stmt->bind_param($types, ...$params);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $questions = [];
+                while ($row = $result->fetch_assoc()) {
+                    $questions[] = $row;
+                }
+                echo json_encode(['questions' => $questions]);
+                exit;
+            }
+            // --- END SEARCH/LIST MODE ---
 
             if ($difficulty > 0) {
                 $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND difficulty = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
@@ -306,19 +328,90 @@ document.addEventListener("DOMContentLoaded", function () {
             preview.style = "margin-top:10px;padding:10px;background-color:#f9f9f9;border-radius:5px;";
             preview.innerText = "No question loaded yet.";
 
+            // --- SEARCH UI ---
+            const controlsDiv = document.createElement('div');
+            controlsDiv.style = "display:flex;gap:10px;align-items:center;margin-top:5px;position:relative;";
+
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.placeholder = 'Search questions...';
+            searchInput.className = 'form-control form-control-sm';
+            searchInput.style = "max-width:200px;";
+
+            const searchResults = document.createElement('div');
+            searchResults.className = 'search-results';
+            searchResults.style = "position:absolute;top:100%;left:0;background:white;border:1px solid #ddd;max-height:200px;overflow-y:auto;display:none;z-index:1000;width:300px;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin-top:2px;border-radius:4px;";
+
+            function loadQuestions(searchTerm = '') {
+                const courseId = document.getElementById('course_id').value;
+                const categoryId = document.getElementById('category_id').value;
+                const difficulty = difficultySelect.value;
+                const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}&search=${encodeURIComponent(searchTerm)}&list=1`;
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        searchResults.innerHTML = '';
+                        if (data.questions && data.questions.length > 0) {
+                            searchResults.style.display = 'block';
+                            data.questions.forEach(q => {
+                                const div = document.createElement('div');
+                                div.style = "padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;";
+                                div.onmouseover = () => div.style.backgroundColor = '#f5f5f5';
+                                div.onmouseout = () => div.style.backgroundColor = '';
+                                div.innerHTML = `<em>${q.text}</em>`;
+                                div.onclick = () => {
+                                    questionData[i] = q.qu_id;
+                                    preview.innerHTML = `<em>${q.text}</em>`;
+                                    document.getElementById('question_ids').value = questionData.filter(id => id).join(',');
+                                    searchResults.style.display = 'none';
+                                    searchInput.value = '';
+                                };
+                                searchResults.appendChild(div);
+                            });
+                        } else {
+                            searchResults.style.display = 'none';
+                        }
+                    });
+            }
+            // Load 10 questions by default
+            loadQuestions();
+
+            let debounceTimer;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                const searchTerm = this.value.trim();
+                debounceTimer = setTimeout(() => loadQuestions(searchTerm), 300);
+            });
+
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchResults.contains(e.target) && e.target !== searchInput) {
+                    searchResults.style.display = 'none';
+                }
+            });
+            searchInput.addEventListener('focus', () => {
+                if (searchResults.children.length > 0) {
+                    searchResults.style.display = 'block';
+                }
+            });
+            // --- END SEARCH UI ---
+
             const rerollBtn = document.createElement('button');
             rerollBtn.type = 'button';
             rerollBtn.innerText = '🔄 Reroll';
             rerollBtn.style = "margin-top:5px;";
             rerollBtn.onclick = () => fetchQuestion(i);
 
+            controlsDiv.appendChild(searchInput);
+            controlsDiv.appendChild(searchResults);
+            controlsDiv.appendChild(rerollBtn);
+
             wrapper.innerHTML = `<strong>Question ${i + 1}</strong><br>`;
             wrapper.appendChild(document.createTextNode("Difficulty: "));
             wrapper.appendChild(difficultySelect);
             wrapper.appendChild(document.createElement('br'));
             wrapper.appendChild(preview);
-            wrapper.appendChild(document.createElement('br'));
-            wrapper.appendChild(rerollBtn);
+            wrapper.appendChild(controlsDiv);
             container.appendChild(wrapper);
 
             setTimeout(() => fetchQuestion(i), 100 * (i + 1));
