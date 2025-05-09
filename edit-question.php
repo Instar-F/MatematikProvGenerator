@@ -28,7 +28,10 @@ if (!$question) {
 
 // Fetch categories and question types
 $categories = $pdo->query("SELECT ca_id, ca_name FROM categories")->fetchAll();
-$questionTypes = $pdo->query("SELECT qt_id, qt_name FROM questiontypes")->fetchAll();
+
+// Prefill fields
+$prefillText = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['text'] : '';
+$prefillAnswer = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['answer'] : '';
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -37,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $total_points = (int)($_POST['total_points'] ?? 0);
     $ca_id = $_POST['ca_id'] ?? null;
     $qt_id = $_POST['qt_id'] ?? null;
-    $image_url = $question['image_url']; // Default to the existing image
+    $image_url = $question['image_url']; // Default to existing image
 
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -55,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $uploadFile = $uploadDir . $uniqueName;
             $webPath = $webPathBase . $uniqueName;
             if (move_uploaded_file($tmpFile, $uploadFile)) {
-                $image_url = $webPath; // Update the image URL
+                $image_url = $webPath;
             } else {
                 echo "<p class='alert alert-danger'>Failed to upload image.</p>";
             }
@@ -75,16 +78,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Determine the previous page for highlighting in the sidebar
+// Determine the previous page
 $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH)) : '';
 ?>
 
 <div class="container-fluid mt-5">
     <div class="row">
-        <!-- Sidebar with links -->
+        <!-- Sidebar -->
         <div class="col-md-4 sidebar-container">
             <?php
-            $currentPage = $previousPage; // Use the previous page for highlighting
+            $currentPage = $previousPage;
             require_once "sidebar.php";
             ?>
         </div>
@@ -106,24 +109,13 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
                     </div>
 
                     <div class="form-group mb-3">
-                        <label for="questiontype">Frågetyp:</label>
-                        <select name="qt_id" id="questiontype" class="form-control">
-                            <?php foreach ($questionTypes as $qt): ?>
-                                <option value="<?= $qt['qt_id']; ?>" <?= $qt['qt_id'] == $question['qt_id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($qt['qt_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group mb-3">
                         <label for="question">Fråga:</label>
-                        <textarea name="question" id="question" class="form-control"><?= htmlspecialchars($question['text']); ?></textarea>
+                        <textarea name="question" id="question" class="form-control"><?= htmlspecialchars_decode($prefillText); ?></textarea>
                     </div>
 
                     <div class="form-group mb-3">
                         <label for="answer">Svar:</label>
-                        <textarea name="answer" id="answer" class="form-control"><?= htmlspecialchars($question['answer']); ?></textarea>
+                        <textarea name="answer" id="answer" class="form-control"><?= htmlspecialchars_decode($prefillAnswer); ?></textarea>
                     </div>
 
                     <div class="form-group mb-3">
@@ -150,6 +142,7 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
     </div>
 </div>
 
+<!-- Import CKEditor and delay init to fix disappearing bug -->
 <script type="importmap">
 {
     "imports": {
@@ -159,5 +152,13 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
 }
 </script>
 <script type="module" src="./main.js"></script>
+<script>
+    // Delay CKEditor initialization to ensure textareas are visible
+    setTimeout(() => {
+        if (typeof window.initCkEditor === 'function') {
+            window.initCkEditor();
+        }
+    }, 100);
+</script>
 
 <?php require_once "include/footer.php"; ?>

@@ -19,7 +19,6 @@ import {
 	Undo,
 } from 'ckeditor5';
 
-
 const LICENSE_KEY = 'GPL'; // Free license placeholder
 
 const editorConfig = {
@@ -66,9 +65,9 @@ const editorConfig = {
 
 	table: {
 		contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
-	},
+	}
 
-	initialData: '<p></p>'
+	// ✅ Removed: initialData
 };
 
 document.querySelectorAll('#question, #answer').forEach(element => {

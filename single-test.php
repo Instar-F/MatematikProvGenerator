@@ -25,7 +25,7 @@ if (isset($_GET['exid'])) {
     $test = $testDetails->fetch(PDO::FETCH_ASSOC);
 
     $questionsQuery = $pdo->prepare("
-        SELECT q.text, q.answer, q.total_points 
+        SELECT q.text, q.answer, q.total_points, q.image_url
         FROM matteprovgenerator.exam_questions eq
         INNER JOIN matteprovgenerator.questions q ON eq.qu_id = q.qu_id
         WHERE eq.ex_id = :testId
@@ -264,6 +264,7 @@ $currentPage = 'test-list.php';
                                     <div class="question-item">
                                         <div><strong>Question <?= $index + 1 ?>:</strong></div>
                                         <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                        <img src="<?= strip_tags($question['image_url'])?>"> </img>
                                         <div class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
                                     </div>
                                 <?php endforeach; ?>
