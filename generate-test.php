@@ -116,13 +116,13 @@ if (isset($_GET['action'])) {
                 
                 if ($countResult['count'] > 0) {
                     // Questions exist, but not with the specified difficulty
-                    echo json_encode([
+                    echo json_encode([ 
                         'error' => 'No questions found with the selected difficulty. Try "Any difficulty".',
                         'debug' => $debug
                     ]);
                 } else {
                     // No questions at all for this category
-                    echo json_encode([
+                    echo json_encode([ 
                         'error' => 'No questions found for the selected category.',
                         'debug' => $debug
                     ]);
@@ -145,17 +145,6 @@ if (isset($_GET['action'])) {
 
 // Clear the buffer for regular page output
 ob_clean();
-
-// Try to get question types
-try {
-    $questionTypes = $mysqli->query("SELECT qt_id, qt_name FROM questiontypes ORDER BY qt_name");
-    if (!$questionTypes) {
-        throw new Exception("Error fetching question types: " . $mysqli->error);
-    }
-    $questionTypesArray = $questionTypes->fetch_all(MYSQLI_ASSOC);
-} catch (Exception $e) {
-    die("Database error: " . $e->getMessage());
-}
 
 // Handle exam creation
 // Handle form submission
@@ -196,7 +185,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['questions'])) {
     }
 }
 
-
 require_once "include/header.php";
 
 if (!empty($statusMessage)) {
@@ -204,14 +192,14 @@ if (!empty($statusMessage)) {
 }
 ?>
 
-<div class="container-fluid mt-5">
-    <div class="row">
+<div class="container-fluid fill-topbottom h-100">
+    <div class="row h-100">
         <!-- Sidebar with links -->
-        <div class="col-md-4 ps-0">
+        <div class="col-md-4 ps-0 pe-0">
             <?php require_once "sidebar.php"; ?>
         </div>
         <!-- Main content -->
-        <div class="col-md-8">
+        <div class="col-md-8 ps-0 pe-0">
             <div class="card shadow-lg">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">Exam Generator</h4>
@@ -280,7 +268,6 @@ const defaultNumQuestions = 6; // Default to 6 questions
 const defaultDifficulties = [1, 2, 3, 4, 5, 6]; // Default difficulties from 1 to 6
 
 // Only define questionTypes if available from server
-const questionTypes = <?= json_encode($questionTypesArray ?? []) ?>;
 let questionData = [];
 let debugMode = true; // Set to true to see debug information
 
@@ -350,6 +337,7 @@ function buildQuestionSlots() {
         const difficultySelect = document.createElement('select');
         difficultySelect.name = `difficulty_select_${i}`;
         difficultySelect.innerHTML = `
+
             <option value="0">Any</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -366,74 +354,12 @@ function buildQuestionSlots() {
         preview.style.marginTop = "10px";
         preview.style.padding = "10px";
         preview.style.backgroundColor = "#f9f9f9";
-        preview.style.borderRadius = "5px";
-        preview.innerText = "No question loaded yet.";
-
-        const rerollBtn = document.createElement('button');
-        rerollBtn.type = 'button';
-        rerollBtn.innerText = '🔄 Reroll';
-        rerollBtn.onclick = () => fetchQuestion(i);
-        rerollBtn.style.marginTop = "5px";
-
-        wrapper.innerHTML = `<strong>Question ${i + 1}</strong><br>`;
-        const difficultyLabel = document.createElement('p');
-        difficultyLabel.innerText = "Frågetyp:";
-        wrapper.appendChild(difficultyLabel);
+        preview.style.border = "1px solid #ccc";
+        preview.innerText = "No question selected";
         wrapper.appendChild(difficultySelect);
-
-        wrapper.appendChild(document.createElement('br'));
         wrapper.appendChild(preview);
-        wrapper.appendChild(document.createElement('br'));
-        wrapper.appendChild(rerollBtn);
-
-        container.appendChild(wrapper);
-
-        // Auto-fetch a question when the slot is created
-        setTimeout(() => fetchQuestion(i), 100 * (i + 1)); // Stagger requests to prevent overloading
-    }
+            // Add the slot to container
+    container.appendChild(wrapper);
 }
-
-// Update the form's question count to default to 6
-document.getElementById('num_questions').value = defaultNumQuestions;
-
-
-
-function fetchQuestion(index) {
-    const courseId = document.getElementById('course_id').value;
-    const categoryId = document.getElementById('category_id').value;
-    const difficulty = document.querySelector(`[name=difficulty_select_${index}]`).value;
-    
-    if (!courseId || !categoryId) {
-        document.getElementById(`preview-${index}`).innerHTML = "<span style='color:#f70;'>⚠️ Please select course and category first</span>";
-        return;
-    }
-
-    const preview = document.getElementById(`preview-${index}`);
-    preview.innerHTML = "Loading question...";
-
-    const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}`;
-    
-    fetch(url)
-        .then(res => {
-            if (!res.ok) {
-                throw new Error(`Server returned ${res.status}: ${res.statusText}`);
-            }
-            return res.json();
-        })
-        .then(data => {
-            if (data && data.qu_id) {
-                questionData[index] = data.qu_id;
-                preview.innerHTML = `<em>${data.text}</em>`;
-            } else {
-                questionData[index] = null;
-                preview.innerHTML = `<span style='color:red;'>${data.error || 'No question found'}</span>`;
-            }
-        })
-        .catch(err => {
-            console.error("Loading question failed:", err);
-            preview.innerHTML = `<span style='color:red;'>Error: ${err.message}</span>`;
-        });
-}
-</script>
-
+</script> 
 <?php require_once "include/footer.php"; ?>
