@@ -41,17 +41,16 @@ try {
     $errorMessage = "Failed to load courses: " . $e->getMessage();
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Category</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap CSS already linked in the project -->
 </head>
 <body>
-<div class="container-fluid mt-5 pb-5">
+<div class="container-fluid mt-5">
     <div class="row">
         <!-- Sidebar with links -->
         <div class="col-md-4 ps-0">

@@ -43,12 +43,14 @@ if(isset($_POST['searchuser-submit'])){
                 </div>
                 <div class="card-body">
                     <form action="" method="POST">
-                        <div class="mb-3">
-                            <label for="testname" class="form-label">Name</label>
-                            <input type="text" value="" id="testname" name="testname" class="form-control" required>
-                        </div>
-                        <div class="d-grid">
-                            <button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
+                        <div class="row g-2 align-items-end mb-3">
+                            <div class="col">
+                                <label for="testname" class="form-label">Name:</label>
+                                <input type="text" value="" id="testname" name="testname" class="form-control" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" name="searchuser-submit" class="btn btn-primary btn-sm">Search</button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -60,18 +62,20 @@ if(isset($_POST['searchuser-submit'])){
                             <th>Name</th>
                             <th>Created By</th>
                             <th>Timestamp</th>
-                            <th>Management</th>
+                            <th class="text-center">Management</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php 
                         if (!empty($testList["data"])):
                             foreach ($testList["data"] as $userRow): ?>
-                                <tr>
+                                <tr class="align-middle">
                                     <td><?= htmlspecialchars($userRow['ex_name']) ?></td>
                                     <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
                                     <td><?= htmlspecialchars($userRow['created_at']) ?></td>
-                                    <td><a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-primary btn-sm">Show</a></td>
+                                    <td class="text-center">
+                                        <a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-sm btn-outline-primary" style="display:inline-block;min-width:70px;">Show</a>
+                                    </td>
                                 </tr>
                             <?php endforeach; 
                         else: ?>

@@ -38,63 +38,65 @@ if(isset($_POST['searchuser-submit'])){
         </div>
         <!-- Main content -->
         <div class="col-md-8">
-            <div class="row justify-content-center">
-				<?php if(isset($_GET['deleteduser'])): ?>
-				<div class="user-feedback bg-success text-white m-4"><p class="text-center m-2">User was successfully deleted</p></div>
-				<?php endif; ?>
-				<div class="col-md-6">
-					<div class="card shadow-lg p-4">
-						<h2 class="text-center mb-4">Edit user</h2>
-						<form action="" method="POST">
-							
-							<div class="mb-3">
-								<label for="uname" class="form-label">Username:</label>
-								<input type="text" value="" id="uname" name="uname" class="form-control" required>
-							</div>
-
-							<div class="d-grid">
-								<button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
-							</div>
-
-						</form>
-					</div>
-				</div>
-            </div>
-            <div class="row">
-                <div class="container mt-4">
-                    <div class="row fw-bold border-bottom pb-2 mb-2">
-                        <div class="col-3">Username</div>
-                        <div class="col-3">Email</div>
-                        <div class="col-3">Role</div>
-                        <div class="col-3">Management</div>
-
+            <div class="container mt-5">
+                <div class="card shadow-lg">
+                    <div class="card-header">
+                        User Management
                     </div>
-            
-
-                    <?php 
-					if(!empty($userList["data"])):
-					foreach ($userList["data"] as $userRow): 
-						// Skip users with r_level of 900 if the current user has r_level of 300
-						if ($_SESSION['user']['role'] == 300 && $userRow['r_level'] == 900) {
-							continue;
-						}
-					?>
-						<div class="row mb-2">
-							<div class="col"><?= htmlspecialchars($userRow['u_uname']) ?></div>
-							<div class="col"><?= htmlspecialchars($userRow['u_mail']) ?></div>
-							<div class="col"><?= htmlspecialchars($userRow['r_name']) ?></div>
-							<div class="col"><a href="edit-user.php?uid=<?= htmlspecialchars($userRow['u_id']) ?>">Edit</a></div>
-						</div>
-                    <?php
-					endforeach; 
-					else:
-						  echo "<div class='col text-center'>No result</div>";
-					endif;
-					?>
+                    <div class="card-body">
+                        <?php if(isset($_GET['deleteduser'])): ?>
+                        <div class="alert alert-success text-center mb-4">User was successfully deleted</div>
+                        <?php endif; ?>
+                        <form action="" method="POST" class="mb-4">
+                            <div class="row g-2 align-items-end">
+                                <div class="col">
+                                    <label for="uname" class="form-label">Username:</label>
+                                    <input type="text" value="" id="uname" name="uname" class="form-control" required>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="submit" name="searchuser-submit" class="btn btn-primary">Search</button>
+                                </div>
+                            </div>
+                        </form>
+                        <div class="table-responsive">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th class="text-center">Management</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                <?php 
+                                if(!empty($userList["data"])):
+                                foreach ($userList["data"] as $userRow): 
+                                    if ($_SESSION['user']['role'] == 300 && $userRow['r_level'] == 900) {
+                                        continue;
+                                    }
+                                ?>
+                                    <tr>
+                                        <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
+                                        <td><?= htmlspecialchars($userRow['u_mail']) ?></td>
+                                        <td><?= htmlspecialchars($userRow['r_name']) ?></td>
+                                        <td class="text-center">
+                                            <a href="edit-user.php?uid=<?= htmlspecialchars($userRow['u_id']) ?>" class="btn btn-sm btn-outline-primary" style="display:inline-block;min-width:70px;">Show</a>
+                                        </td>
+                                    </tr>
+                                <?php
+                                endforeach; 
+                                else:
+                                    echo "<tr><td colspan='4' class='text-center'>No result</td></tr>";
+                                endif;
+                                ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
 <?php require_once "include/footer.php"; ?>

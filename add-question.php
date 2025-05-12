@@ -56,82 +56,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="col-md-4 ps-0">
             <?php require_once "sidebar.php"; ?>
         </div>
-
         <div class="col-md-8">
-            <div class="card shadow-lg">
-                <div class="card-header bg-success text-white">
-                    <h4 class="mb-0">Lägg till fråga</h4>
-                </div>
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="course" class="form-label">Kurs:</label>
-                            <select name="co_id" id="course" class="form-control" onchange="filterCategories()">
-                                <option value="">Välj en kurs</option>
-                                <?php foreach ($courses as $course): ?>
-                                    <option value="<?= $course['co_id']; ?>" <?= $course['co_id'] == $co_id ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($course['co_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Kategori:</label>
-                            <select name="ca_id" id="category" class="form-control">
-                                <option value="">Välj en kategori</option>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?= $category['ca_id']; ?>" data-course="<?= $category['ca_co_fk']; ?>" <?= $category['ca_id'] == $ca_id ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($category['ca_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="question" class="form-label">Fråga:</label>
-                            <textarea name="question" id="question"><?= htmlspecialchars($question) ?></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="answer" class="form-label">Svar:</label>
-                            <textarea name="answer" id="answer"><?= htmlspecialchars($answer) ?></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="image" class="form-label">Ladda upp en bild:</label>
-                            <input type="file" name="image" id="image" class="form-control">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="points" class="form-label">Poäng för frågan:</label>
-                            <input type="number" name="points" id="points" class="form-control" value="<?= htmlspecialchars($points) ?>">
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="difficulty" class="form-label">Svårighetsgrad (1–6):</label>
-                            <input type="number" name="difficulty" id="difficulty" min="1" max="6" class="form-control" value="<?= htmlspecialchars($difficulty) ?>" onkeydown="replaceDifficulty(event, this)">
-                        </div>
-
-                        <div class="mb-3 d-flex justify-content-start">
-                            <button type="button" id="previewButton" class="btn btn-outline-secondary me-2">Förhandsgranska</button>
-                            <button type="submit" class="btn btn-success">Spara till databas</button>
-                        </div>
-                    </form>
-
-                    <div id="previewCard" class="mt-4 p-3 border rounded" style="display: none; background-color: #f9f9f9;">
-                        <h5>Förhandsgranskning</h5>
-                        <div id="previewError" class="alert alert-danger" style="display: none;">
-                            Du måste skriva något i antingen frågan eller svaret för att förhandsgranska.
-                        </div>
-                        <h6>Fråga:</h6>
-                        <div id="previewQuestion" class="mb-3"></div>
-                        <h6>Svar:</h6>
-                        <div id="previewAnswer"></div>
+            <div class="container mt-5">
+                <div class="card shadow-lg">
+                    <div class="card-header">
+                        Lägg till fråga
                     </div>
-                </div>
-                <div class="card-footer text-muted text-center">
-                    <small>MatematikProvGenerator - Lägg till Fråga</small>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label for="course" class="form-label">Kurs:</label>
+                                <select name="co_id" id="course" class="form-control" onchange="filterCategories()">
+                                    <option value="">Välj en kurs</option>
+                                    <?php foreach ($courses as $course): ?>
+                                        <option value="<?= $course['co_id']; ?>" <?= $course['co_id'] == $co_id ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($course['co_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Kategori:</label>
+                                <select name="ca_id" id="category" class="form-control">
+                                    <option value="">Välj en kategori</option>
+                                    <?php foreach ($categories as $category): ?>
+                                        <option value="<?= $category['ca_id']; ?>" data-course="<?= $category['ca_co_fk']; ?>" <?= $category['ca_id'] == $ca_id ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($category['ca_name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="question" class="form-label">Fråga:</label>
+                                <textarea name="question" id="question"><?= htmlspecialchars($question) ?></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="answer" class="form-label">Svar:</label>
+                                <textarea name="answer" id="answer"><?= htmlspecialchars($answer) ?></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Ladda upp en bild:</label>
+                                <input type="file" name="image" id="image" class="form-control">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="points" class="form-label">Poäng för frågan:</label>
+                                <input type="number" name="points" id="points" class="form-control" value="<?= htmlspecialchars($points) ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="difficulty" class="form-label">Svårighetsgrad (1–6):</label>
+                                <input type="number" name="difficulty" id="difficulty" min="1" max="6" class="form-control" value="<?= htmlspecialchars($difficulty) ?>" onkeydown="replaceDifficulty(event, this)">
+                            </div>
+
+                            <div class="mb-3 d-flex justify-content-start">
+                                <button type="button" id="previewButton" class="btn btn-outline-secondary me-2">Förhandsgranska</button>
+                                <button type="submit" class="btn btn-success">Spara till databas</button>
+                            </div>
+                        </form>
+                        <div id="previewCard" class="mt-4 p-3 border rounded" style="display: none; background-color: #f9f9f9;">
+                            <h5>Förhandsgranskning</h5>
+                            <div id="previewError" class="alert alert-danger" style="display: none;">
+                                Du måste skriva något i antingen frågan eller svaret för att förhandsgranska.
+                            </div>
+                            <h6>Fråga:</h6>
+                            <div id="previewQuestion" class="mb-3"></div>
+                            <h6>Svar:</h6>
+                            <div id="previewAnswer"></div>
+                        </div>
+                    </div>
+                    <div class="card-footer text-muted text-center">
+                        <small>MatematikProvGenerator - Lägg till Fråga</small>
+                    </div>
                 </div>
             </div>
         </div>

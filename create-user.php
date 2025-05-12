@@ -38,45 +38,48 @@ if (isset($_POST['register-submit'])) {
         </div>
         <!-- Main content -->
         <div class="col-md-8">
-            <div class="card shadow-lg p-4">
-                <h2 class="text-center mb-4">Create new user</h2>
-                <form action="" method="POST">
-                    
-                    <div class="mb-3">
-                        <label for="uname" class="form-label">Username:</label>
-                        <input type="text" id="uname" name="uname" class="form-control" required>
+            <div class="container mt-5">
+                <div class="card shadow-lg">
+                    <div class="card-header">
+                        Create New User
                     </div>
-                    <div class="mb-3">
-                        <label for="umail" class="form-label">Email:</label>
-                        <input type="email" id="umail" name="umail" class="form-control" required>
+                    <div class="card-body">
+                        <?php if (!empty($successMessage)): ?>
+                            <div class="alert alert-success"><?= htmlspecialchars($successMessage); ?></div>
+                        <?php elseif (!empty($errorMessage)): ?>
+                            <div class="alert alert-danger"><?= htmlspecialchars($errorMessage); ?></div>
+                        <?php endif; ?>
+                        <form action="" method="POST">
+                            <div class="form-group mb-3">
+                                <label for="uname" class="form-label">Username:</label>
+                                <input type="text" id="uname" name="uname" class="form-control" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="umail" class="form-label">Email:</label>
+                                <input type="email" id="umail" name="umail" class="form-control" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="upass" class="form-label">Password:</label>
+                                <input type="password" id="upass" name="upass" class="form-control" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="upassrpt" class="form-label">Repeat Password:</label>
+                                <input type="password" id="upassrpt" name="upassrpt" class="form-control" required>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="urole" class="form-label">User Role:</label>
+                                <select id="urole" name="urole" class="form-select" required>
+                                    <?php
+                                    foreach ($allUserRoles as $role) {
+                                        echo "<option value='{$role['r_id']}'>{$role['r_name']}</option>";
+                                    }
+                                    ?>
+                                </select>
+                            </div>
+                            <button type="submit" name="register-submit" class="btn btn-primary">Submit</button>
+                        </form>
                     </div>
-
-                    <div class="mb-3">
-                        <label for="upass" class="form-label">Password:</label>
-                        <input type="password" id="upass" name="upass" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="upassrpt" class="form-label">Repeat Password:</label>
-                        <input type="password" id="upassrpt" name="upassrpt" class="form-control" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="urole" class="form-label">User Role:</label>
-                        <select id="urole" name="urole" class="form-select" required>
-                            <?php
-                            foreach ($allUserRoles as $role) {
-                                echo "<option value='{$role['r_id']}'>{$role['r_name']}</option>";
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="d-grid">
-                        <button type="submit" name="register-submit" class="btn btn-primary">Submit</button>
-                    </div>
-
-                </form>
+                </div>
             </div>
         </div>
     </div>
