@@ -57,11 +57,11 @@ if(isset($_POST['searchuser-submit'])){
     margin: 0 auto;
     padding: 32px 16px 32px 16px;
 }
+/* Sidebar toggle button styling */
 #toggleSidebar {
     position: fixed;
-    top: 50%;
+    top: 38%; /* Move above the vertical center */
     left: 0;
-    transform: translateY(-50%);
     z-index: 2100;
     border-radius: 50%;
     width: 44px;
@@ -76,7 +76,6 @@ if(isset($_POST['searchuser-submit'])){
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     transition: left 0.28s cubic-bezier(.4,0,.2,1), background 0.18s, color 0.18s;
     cursor: pointer;
-    font-size: 2rem;
 }
 #toggleSidebar.open {
     left: 320px;
@@ -89,13 +88,29 @@ if(isset($_POST['searchuser-submit'])){
     color: #0a58ca;
 }
 #toggleArrow {
-    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-    font-size: 2rem;
-    line-height: 1;
     display: flex;
-    align-items: center;
+    flex-direction: column;
     justify-content: center;
-    font-family: inherit;
+    align-items: center;
+    width: 22px;
+    height: 22px;
+}
+.hamburger-bar {
+    width: 22px;
+    height: 3px;
+    background: #0d6efd;
+    margin: 2.5px 0;
+    border-radius: 2px;
+    transition: all 0.25s;
+}
+#toggleSidebar.open .hamburger-bar:nth-child(1) {
+    transform: translateY(5.5px) rotate(45deg);
+}
+#toggleSidebar.open .hamburger-bar:nth-child(2) {
+    opacity: 0;
+}
+#toggleSidebar.open .hamburger-bar:nth-child(3) {
+    transform: translateY(-5.5px) rotate(-45deg);
 }
 #sidebarOverlay {
     display: none;
@@ -115,7 +130,11 @@ if(isset($_POST['searchuser-submit'])){
 </style>
 
 <button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
-    <span id="toggleArrow">+</span>
+    <span id="toggleArrow">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+    </span>
 </button>
 <div id="sidebarOverlay"></div>
 
@@ -192,14 +211,12 @@ if(isset($_POST['searchuser-submit'])){
 const sidebar = document.getElementById('sidebarColumn');
 const main = document.getElementById('mainColumn');
 const toggleBtn = document.getElementById('toggleSidebar');
-const toggleArrow = document.getElementById('toggleArrow');
 const overlay = document.getElementById('sidebarOverlay');
 let sidebarVisible = false;
 
 function showSidebar() {
     sidebar.classList.add('visible');
     overlay.classList.add('visible');
-    toggleArrow.textContent = "-";
     toggleBtn.classList.remove('closed');
     toggleBtn.classList.add('open');
 }
@@ -207,7 +224,6 @@ function showSidebar() {
 function hideSidebar() {
     sidebar.classList.remove('visible');
     overlay.classList.remove('visible');
-    toggleArrow.textContent = "+";
     toggleBtn.classList.remove('open');
     toggleBtn.classList.add('closed');
 }
