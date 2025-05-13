@@ -229,18 +229,137 @@ $currentPage = 'test-list.php';
                 display: none;
             }
         }
+
+        #sidebarColumn {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 320px;
+            height: 100vh;
+            background: #fff;
+            z-index: 2000;
+            box-shadow: 2px 0 16px rgba(0,0,0,0.12);
+            transform: translateX(-100%);
+            opacity: 0;
+            transition: transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.18s cubic-bezier(.4,0,.2,1);
+            will-change: transform, opacity;
+        }
+        #sidebarColumn.visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        #mainColumn {
+            transition: none;
+        }
+        .page-centered-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 16px 32px 16px;
+        }
+        #toggleSidebar {
+            position: fixed;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            z-index: 2100;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            border: 2px solid #0d6efd;
+            color: #0d6efd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: left 0.28s cubic-bezier(.4,0,.2,1), background 0.18s, color 0.18s;
+            cursor: pointer;
+            font-size: 2rem;
+        }
+        #toggleSidebar.open {
+            left: 320px;
+        }
+        #toggleSidebar.closed {
+            left: 0;
+        }
+        #toggleSidebar:hover {
+            background: #e7f1ff;
+            color: #0a58ca;
+        }
+        #toggleArrow {
+            transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+            font-size: 2rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: inherit;
+        }
+        #sidebarOverlay {
+            display: none;
+            position: fixed;
+            z-index: 1999;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.18);
+            transition: opacity 0.18s;
+        }
+        #sidebarOverlay.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .test-preview-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 2rem;
+            padding: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .test-preview-left-panel {
+            background-color: white;
+            width: 794px; /* A4 width */
+            min-height: 1123px; /* A4 height */
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .test-preview-right-panel {
+            flex: 1;
+            max-width: 600px; /* Increased from 400px to 600px */
+            background: #fff;
+            padding: 1.5rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+            overflow-y: auto;
+            max-height: 1123px;
+            margin-top: 1rem;
+            min-width: 350px; /* Ensure minimum width for readability */
+        }
     </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <div class="row">
+<button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
+    <span id="toggleArrow">+</span>
+</button>
+<div id="sidebarOverlay"></div>
+
+<div class="container-fluid page-centered-container">
+    <div class="row" id="contentRow">
         <!-- Sidebar with links -->
-        <div class="col-md-4 sidebar-container">
+        <div class="col-md ps-0" id="sidebarColumn">
             <?php require_once "sidebar.php"; ?>
         </div>
         <!-- Main content -->
-        <div class="col-md-8">
+        <div class="col-md" id="mainColumn">
             <div class="card card-shadow">
                 <div class="card-header card-header-centered">
                     <h1>Test Preview</h1>
@@ -296,6 +415,45 @@ $currentPage = 'test-list.php';
         </div>
     </div>
 </div>
+<script>
+const sidebar = document.getElementById('sidebarColumn');
+const main = document.getElementById('mainColumn');
+const toggleBtn = document.getElementById('toggleSidebar');
+const toggleArrow = document.getElementById('toggleArrow');
+const overlay = document.getElementById('sidebarOverlay');
+let sidebarVisible = false;
 
+function showSidebar() {
+    sidebar.classList.add('visible');
+    overlay.classList.add('visible');
+    toggleArrow.textContent = "-";
+    toggleBtn.classList.remove('closed');
+    toggleBtn.classList.add('open');
+}
+
+function hideSidebar() {
+    sidebar.classList.remove('visible');
+    overlay.classList.remove('visible');
+    toggleArrow.textContent = "+";
+    toggleBtn.classList.remove('open');
+    toggleBtn.classList.add('closed');
+}
+
+toggleBtn.addEventListener('click', function () {
+    sidebarVisible = !sidebarVisible;
+    if (sidebarVisible) {
+        showSidebar();
+    } else {
+        hideSidebar();
+    }
+});
+
+overlay.addEventListener('click', function () {
+    sidebarVisible = false;
+    hideSidebar();
+});
+
+hideSidebar();
+</script>
 </body>
 </html>

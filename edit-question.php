@@ -82,17 +82,120 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH)) : '';
 ?>
 
-<div class="container-fluid mt-5">
-    <div class="row">
+<style>
+#sidebarColumn {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100vh;
+    background: #fff;
+    z-index: 2000;
+    box-shadow: 2px 0 16px rgba(0,0,0,0.12);
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.18s cubic-bezier(.4,0,.2,1);
+    will-change: transform, opacity;
+}
+#sidebarColumn.visible {
+    transform: translateX(0);
+    opacity: 1;
+}
+#mainColumn {
+    transition: none;
+}
+.page-centered-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 16px 32px 16px;
+}
+#toggleSidebar {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 2100;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 2px solid #0d6efd;
+    color: #0d6efd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: left 0.28s cubic-bezier(.4,0,.2,1), background 0.18s, color 0.18s;
+    cursor: pointer;
+    font-size: 2rem;
+}
+#toggleSidebar.open {
+    left: 320px;
+}
+#toggleSidebar.closed {
+    left: 0;
+}
+#toggleSidebar:hover {
+    background: #e7f1ff;
+    color: #0a58ca;
+}
+#toggleArrow {
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1);
+    font-size: 2rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+}
+#sidebarOverlay {
+    display: none;
+    position: fixed;
+    z-index: 1999;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.18);
+    transition: opacity 0.18s;
+}
+#sidebarOverlay.visible {
+    display: block;
+    opacity: 1;
+}
+</style>
+
+<button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
+    <span id="toggleArrow">+</span>
+</button>
+<div id="sidebarOverlay"></div>
+
+<div class="container-fluid page-centered-container">
+    <div class="row" id="contentRow">
         <!-- Sidebar -->
-        <div class="col-md-4 sidebar-container">
+        <div class="col-md ps-0" id="sidebarColumn">
             <?php
-            $currentPage = $previousPage;
+            // Set $currentPage to previous page if not a sidebar page
+            $sidebarPages = [
+                'dashboard.php',
+                'user-management.php',
+                'test-list.php',
+                'assignments.php',
+                'add-question.php',
+                'add-category.php',
+                'add-course.php',
+                'create-user.php',
+                // add other sidebar-linked pages here
+            ];
+            $currentPage = in_array(basename($_SERVER['PHP_SELF']), $sidebarPages)
+                ? basename($_SERVER['PHP_SELF'])
+                : $previousPage;
             require_once "sidebar.php";
             ?>
         </div>
         <!-- Main content -->
-        <div class="col-md-8">
+        <div class="col-md" id="mainColumn">
             <div class="container py-5">
                 <h1 class="page-title">Redigera Fråga</h1>
 
@@ -141,6 +244,47 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
         </div>
     </div>
 </div>
+
+<script>
+const sidebar = document.getElementById('sidebarColumn');
+const main = document.getElementById('mainColumn');
+const toggleBtn = document.getElementById('toggleSidebar');
+const toggleArrow = document.getElementById('toggleArrow');
+const overlay = document.getElementById('sidebarOverlay');
+let sidebarVisible = false;
+
+function showSidebar() {
+    sidebar.classList.add('visible');
+    overlay.classList.add('visible');
+    toggleArrow.textContent = "-";
+    toggleBtn.classList.remove('closed');
+    toggleBtn.classList.add('open');
+}
+
+function hideSidebar() {
+    sidebar.classList.remove('visible');
+    overlay.classList.remove('visible');
+    toggleArrow.textContent = "+";
+    toggleBtn.classList.remove('open');
+    toggleBtn.classList.add('closed');
+}
+
+toggleBtn.addEventListener('click', function () {
+    sidebarVisible = !sidebarVisible;
+    if (sidebarVisible) {
+        showSidebar();
+    } else {
+        hideSidebar();
+    }
+});
+
+overlay.addEventListener('click', function () {
+    sidebarVisible = false;
+    hideSidebar();
+});
+
+hideSidebar();
+</script>
 
 <!-- Import CKEditor and delay init to fix disappearing bug -->
 <script type="importmap">

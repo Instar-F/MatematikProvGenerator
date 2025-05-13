@@ -1,5 +1,29 @@
 <?php
-$currentPage = basename($_SERVER['PHP_SELF']);
+// Determine which page should be highlighted in the sidebar
+$sidebarPages = [
+    'dashboard.php',
+    'user-management.php',
+    'test-list.php',
+    'assignments.php',
+    'add-question.php',
+    'add-category.php',
+    'add-course.php',
+    'create-user.php',
+    // add other sidebar-linked pages here
+];
+
+// Use $currentPage if set, otherwise fallback to current script
+if (!isset($currentPage)) {
+    $currentPage = basename($_SERVER['PHP_SELF']);
+}
+
+// If $currentPage is not a sidebar page, try to use HTTP_REFERER if available
+if (!in_array($currentPage, $sidebarPages) && isset($_SERVER['HTTP_REFERER'])) {
+    $referer = basename(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH));
+    if (in_array($referer, $sidebarPages)) {
+        $currentPage = $referer;
+    }
+}
 ?>
 <div class="card shadow-lg h-100">
                 <div class="card-body p-0">
