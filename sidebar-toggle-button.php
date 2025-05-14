@@ -1,87 +1,121 @@
 <!-- Sidebar Toggle Button -->
 <style>
-    #toggleSidebarBtn {
+    #toggleSidebar {
         position: fixed;
-        top: 50%;
-        left: 340px; /* Match sidebar width, adjust as needed */
-        transform: translateY(-50%);
-        z-index: 1050;
-        background-color: #ffffff;
-        border: 2px solid #0d6efd;
+        top: 38%; /* Slightly above center */
+        left: 0;
+        z-index: 2100;
         border-radius: 50%;
         width: 44px;
         height: 44px;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        transition: left 0.3s cubic-bezier(.4,2,.6,1), background 0.2s;
+        background: #fff;
+        border: 2px solid #0d6efd;
         color: #0d6efd;
-        font-size: 2rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transition: left 0.28s cubic-bezier(.4,0,.2,1), background 0.18s, color 0.18s;
+        cursor: pointer;
     }
-
-    #toggleSidebarBtn:hover {
+    #toggleSidebar.open {
+        left: 320px;
+    }
+    #toggleSidebar.closed {
+        left: 0;
+    }
+    #toggleSidebar:hover {
         background: #e7f1ff;
         color: #0a58ca;
     }
-
-    #toggleSidebarBtn.closed {
-        left: 0;
+    #toggleArrow {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 22px;
+        height: 22px;
+        font-size: 1.7rem;
+        transition: color 0.18s;
+        position: relative;
     }
-
-    #toggleSidebarBtn i {
-        font-size: 2rem;
-        transition: transform 0.3s cubic-bezier(.4,2,.6,1);
+    .hamburger-bar {
+        width: 22px;
+        height: 3px;
+        background: #0d6efd;
+        margin: 2.5px 0;
+        border-radius: 2px;
+        transition: all 0.25s;
+    }
+    #toggleSidebar.open .hamburger-bar {
+        display: none;
+    }
+    .sidebar-close-icon {
+        display: none;
+        font-size: 1.7rem;
+        color: #0d6efd;
         line-height: 1;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+    #toggleSidebar.open .sidebar-close-icon {
         display: flex;
         align-items: center;
         justify-content: center;
     }
 </style>
 
-<button id="toggleSidebarBtn" class="open" type="button" aria-label="Toggle Sidebar">
-    <span id="toggleSidebarArrow">&#x25C0;</span>
+<button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
+    <span id="toggleArrow">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="sidebar-close-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="display:block;margin:auto;" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="10" width="10" height="2" rx="1" fill="#0d6efd"/>
+            </svg>
+        </span>
+    </span>
 </button>
-
+<div id="sidebarOverlay"></div>
 <script>
-    const toggleBtn = document.getElementById('toggleSidebarBtn');
-    const toggleArrow = document.getElementById('toggleSidebarArrow');
-    const contentRow = document.getElementById('contentRow');
-    const sidebar = document.getElementById('sidebarColumn');
-    const main = document.getElementById('mainColumn');
-    let sidebarVisible = true;
+const sidebar = document.getElementById('sidebarColumn');
+const main = document.getElementById('mainColumn');
+const toggleBtn = document.getElementById('toggleSidebar');
+const overlay = document.getElementById('sidebarOverlay');
+let sidebarVisible = false;
 
-    function updateToggleBtnPosition() {
-        let sidebarWidth = sidebarVisible && sidebar.offsetWidth ? sidebar.offsetWidth : 340;
-        if (!sidebarVisible) {
-            toggleBtn.classList.add('closed');
-            toggleArrow.innerHTML = "&#x25B6;"; // ▶ right arrow
-            toggleBtn.style.left = "0";
-        } else {
-            toggleBtn.classList.remove('closed');
-            toggleArrow.innerHTML = "&#x25C0;"; // ◀ left arrow
-            toggleBtn.style.left = (sidebarWidth) + "px";
-        }
+function showSidebar() {
+    sidebar.classList.add('visible');
+    overlay.classList.add('visible');
+    toggleBtn.classList.remove('closed');
+    toggleBtn.classList.add('open');
+}
+
+function hideSidebar() {
+    sidebar.classList.remove('visible');
+    overlay.classList.remove('visible');
+    toggleBtn.classList.remove('open');
+    toggleBtn.classList.add('closed');
+}
+
+toggleBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    sidebarVisible = !sidebarVisible;
+    if (sidebarVisible) {
+        showSidebar();
+    } else {
+        hideSidebar();
     }
+});
 
-    toggleBtn.addEventListener('click', function () {
-        sidebarVisible = !sidebarVisible;
-        if (!sidebarVisible) {
-            sidebar.style.display = 'none';
-            main.classList.remove('col-md-8');
-            main.classList.add('col-md-12');
-        } else {
-            sidebar.style.display = 'block';
-            main.classList.remove('col-md-12');
-            main.classList.add('col-md-8');
-        }
-        updateToggleBtnPosition();
-    });
+overlay.addEventListener('click', function () {
+    sidebarVisible = false;
+    hideSidebar();
+});
 
-    // Initial position
-    updateToggleBtnPosition();
-
-    // Responsive: update position on window resize
-    window.addEventListener('resize', updateToggleBtnPosition);
+hideSidebar();
 </script>

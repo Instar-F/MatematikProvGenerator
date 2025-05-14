@@ -60,7 +60,7 @@ $currentPage = 'test-list.php';
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-k6RqeWeci5ZR/Lv4MR0sA0FfDOM8V0y5z5l5Z5l5Z5l5Z5l5Z5l5Z5l5Z5l5Z5" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-k6RqeWeci5ZR/Lv4MR0sA0FfDOM8V0y5z5l5Z5l5Z5l5Z5l5Z5l5Z5l5Z5Z5" crossorigin="anonymous">
 
     <style>
         body {
@@ -348,7 +348,16 @@ $currentPage = 'test-list.php';
 <body>
 
 <button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
-    <span id="toggleArrow">+</span>
+    <span id="toggleArrow">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="sidebar-close-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="display:block;margin:auto;" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="10" width="10" height="2" rx="1" fill="#0d6efd"/>
+            </svg>
+        </span>
+    </span>
 </button>
 <div id="sidebarOverlay"></div>
 

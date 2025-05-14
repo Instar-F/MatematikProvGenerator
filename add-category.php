@@ -5,6 +5,18 @@ ini_set('display_errors', 1);
 
 require_once "include/header.php"; // Must include a valid PDO connection in $pdo
 
+if (!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 100);
+
+if (!$result) {
+    echo "You do not have the rights to access this page.";
+    exit(); // Stop the script from continuing
+}
+
 if (!isset($pdo)) {
     die("Database connection not established.");
 }
@@ -112,6 +124,9 @@ try {
         align-items: center;
         width: 22px;
         height: 22px;
+        font-size: 1.7rem;
+        transition: color 0.18s;
+        position: relative;
     }
     .hamburger-bar {
         width: 22px;
@@ -121,14 +136,23 @@ try {
         border-radius: 2px;
         transition: all 0.25s;
     }
-    #toggleSidebar.open .hamburger-bar:nth-child(1) {
-        transform: translateY(5.5px) rotate(45deg);
+    #toggleSidebar.open .hamburger-bar {
+        display: none;
     }
-    #toggleSidebar.open .hamburger-bar:nth-child(2) {
-        opacity: 0;
+    .sidebar-close-icon {
+        display: none;
+        font-size: 1.7rem;
+        color: #0d6efd;
+        line-height: 1;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
     }
-    #toggleSidebar.open .hamburger-bar:nth-child(3) {
-        transform: translateY(-5.5px) rotate(-45deg);
+    #toggleSidebar.open .sidebar-close-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     /* Make centered form buttons medium-sized and professional */
     .form-center-btn-lg {
@@ -149,6 +173,11 @@ try {
         <span class="hamburger-bar"></span>
         <span class="hamburger-bar"></span>
         <span class="hamburger-bar"></span>
+        <span class="sidebar-close-icon">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="display:block;margin:auto;" xmlns="http://www.w3.org/2000/svg">
+                <rect x="6" y="10" width="10" height="2" rx="1" fill="#0d6efd"/>
+            </svg>
+        </span>
     </span>
 </button>
 <div id="sidebarOverlay"></div>
