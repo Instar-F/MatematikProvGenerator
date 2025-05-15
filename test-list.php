@@ -199,7 +199,8 @@ if(isset($_POST['searchuser-submit'])){
                                     <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
                                     <td><?= htmlspecialchars($userRow['created_at']) ?></td>
                                     <td class="text-center">
-                                        <a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-sm btn-outline-primary" style="display:inline-block;min-width:70px;">Show</a>
+                    <a href="single-test.php?exid=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-sm btn-outline-primary" style="min-width:70px;">Show</a>
+                    <a href="generate-test.php?duplicate=<?= htmlspecialchars($userRow['ex_id']) ?>" class="btn btn-sm btn-outline-secondary" style="min-width:90px;">Duplicate/Edit</a>
                                     </td>
                                 </tr>
                             <?php endforeach; 

@@ -78,7 +78,7 @@ if (isset($_GET['action'])) {
                     $params[] = "%$search%";
                     $types .= "s";
                 }
-                $sql .= " AND is_active = 1 GROUP BY text ORDER BY RAND() LIMIT 5"; // <-- Add GROUP BY text to remove duplicates
+                $sql .= " AND is_active = 1 GROUP BY text ORDER BY RAND() LIMIT 5";
                 $stmt = $mysqli->prepare($sql);
                 $stmt->bind_param($types, ...$params);
                 $stmt->execute();
@@ -89,7 +89,7 @@ if (isset($_GET['action'])) {
                 }
                 echo json_encode(['questions' => $questions]);
                 exit;
-            }   
+            }
             // --- END SEARCH/LIST MODE ---
 
             if ($difficulty > 0) {
@@ -114,14 +114,14 @@ if (isset($_GET['action'])) {
 
             $stmt->execute();
             $result = $stmt->get_result();
-            
+
             if ($result->num_rows === 0) {
                 $checkSql = "SELECT COUNT(*) as count FROM questions WHERE ca_id = ? AND is_active = 1";
                 $checkStmt = $mysqli->prepare($checkSql);
                 $checkStmt->bind_param("i", $categoryId);
                 $checkStmt->execute();
                 $countResult = $checkStmt->get_result()->fetch_assoc();
-                
+
                 if ($countResult['count'] > 0) {
                     echo json_encode([
                         'error' => 'No questions found with the selected difficulty. Try "Any difficulty".',
@@ -203,6 +203,70 @@ if (!$result) {
 
 if (!empty($statusMessage)) {
     echo $statusMessage;
+}
+
+$duplicateExamData = null;
+$duplicateQuestions = [];
+$duplicateCourseId = null;
+$duplicateCategoryId = null;
+
+if (isset($_GET['duplicate']) && is_numeric($_GET['duplicate'])) {
+    $duplicateId = (int)$_GET['duplicate'];
+
+    // Load exam basic info AND questions in one efficient query
+    $stmt = $mysqli->prepare("
+        SELECT 
+            e.ex_id,
+            e.ex_name,
+            q.qu_id,
+            q.text,
+            q.difficulty,
+            q.ca_id,
+            c.ca_name,
+            c.ca_co_fk AS course_id,
+            co.co_name AS course_name,
+            eq.question_order
+        FROM exams e
+        JOIN exam_questions eq ON e.ex_id = eq.ex_id
+        JOIN questions q ON eq.qu_id = q.qu_id
+        JOIN categories c ON q.ca_id = c.ca_id
+        JOIN courses co ON c.ca_co_fk = co.co_id
+        WHERE e.ex_id = ?
+        ORDER BY eq.question_order ASC
+    ");
+    
+    $stmt->bind_param("i", $duplicateId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $duplicateQuestions = [];
+        $duplicateQuestionTexts = [];
+        $duplicateQuestionDifficulties = []; // Add this line
+        $row = $result->fetch_assoc();
+        
+        // Set exam data from first row with (duplicate) added
+        $duplicateExamData = [
+            'ex_id' => $row['ex_id'],
+            'ex_name' => $row['ex_name'] . ' (duplicate)'
+        ];
+        
+        // Set course and category from first row
+        $duplicateCategoryId = $row['ca_id'];
+        $duplicateCourseId = $row['course_id'];
+        
+        // Add first question with difficulty
+        $duplicateQuestions[] = $row['qu_id'];
+        $duplicateQuestionTexts[$row['qu_id']] = $row['text'];
+        $duplicateQuestionDifficulties[$row['qu_id']] = $row['difficulty']; // Add this line
+
+        // Add remaining questions
+        while ($row = $result->fetch_assoc()) {
+            $duplicateQuestions[] = $row['qu_id'];
+            $duplicateQuestionTexts[$row['qu_id']] = $row['text'];
+            $duplicateQuestionDifficulties[$row['qu_id']] = $row['difficulty']; // Add this line
+        }
+    }
 }
 ?>
 
@@ -316,7 +380,6 @@ if (!empty($statusMessage)) {
     opacity: 1;
 }
 </style>
-
 <button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
     <span id="toggleArrow">
         <span class="hamburger-bar"></span>
@@ -347,7 +410,7 @@ if (!empty($statusMessage)) {
                     <form id="examForm" method="POST">
                         <div class="mb-3">
                             <label for="exam_name" class="form-label">Exam Name:</label>
-                            <input type="text" name="exam_name" id="exam_name" class="form-control" required placeholder="Enter exam name">
+                            <input type="text" name="exam_name" id="exam_name" class="form-control" required placeholder="Enter exam name" value="<?= htmlspecialchars($duplicateExamData['ex_name'] ?? '') ?>">
                         </div>
 
                         <div class="mb-3">
@@ -379,14 +442,20 @@ if (!empty($statusMessage)) {
 
                         <div class="mb-3">
                             <label for="num_questions" class="form-label">Number of Questions:</label>
-                            <div class="input-group">
-                                <input type="number" id="num_questions" class="form-control" min="1" max="20" value="6">
-                                <button type="button" class="btn btn-outline-secondary" onclick="buildQuestionSlots()">➕ Load Questions</button>
-                            </div>
+                            <input type="number" 
+                                   id="num_questions" 
+                                   class="form-control" 
+                                   min="1" 
+                                   max="20" 
+                                   step="1"
+                                   value="6" 
+                                   onchange="handleNumberChange(event)"
+                                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }">
                         </div>
 
                         <div id="questionSlots" class="mb-3"></div>
                         <input type="hidden" name="questions[]" id="question_ids">
+                        <!-- DUPLICATE MODE SCRIPT MOVED BELOW -->
 
                         <div class="d-grid">
                             <button type="submit" id="submitButton" class="btn btn-success">Create Exam</button>
@@ -402,12 +471,26 @@ if (!empty($statusMessage)) {
 </div>
 
 <script>
+// Declare questionData in the global scope
+window.questionData = [];
+
+// Add this new function to handle number changes
+function handleNumberChange(event) {
+    const courseId = document.getElementById('course_id').value;
+    const categoryId = document.getElementById('category_id').value;
+    
+    if (courseId && categoryId) {
+        // Always preserve existing when changing number
+        buildQuestionSlots(true);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
-    const defaultNumQuestions = 6;
-    const defaultDifficulties = [1, 2, 3, 4, 5, 6];
-    let questionData = [];
+    const defaultNumQuestions = 6; // One for each difficulty level
+    const defaultDifficulties = [1, 2, 3, 4, 5, 6]; // Default difficulties in order
     let debugMode = true;
 
+    // Replace the loadCategories function and add auto-build functionality
     window.loadCategories = function () {
         const courseId = document.getElementById('course_id').value;
         const categorySelect = document.getElementById('category_id');
@@ -430,165 +513,278 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     };
 
-    window.buildQuestionSlots = function () {
-        const count = defaultNumQuestions;
+    // Add event listeners for auto-building slots
+    document.getElementById('category_id').addEventListener('change', function() {
+        const courseId = document.getElementById('course_id').value;
+        const categoryId = this.value;
+        
+        if (courseId && categoryId) {
+            buildQuestionSlots();
+        }
+    });
+
+    window.buildQuestionSlots = function (preserveExisting = false) {
+        const count = parseInt(document.getElementById('num_questions').value, 10) || defaultNumQuestions;
         const courseId = document.getElementById('course_id').value;
         const categoryId = document.getElementById('category_id').value;
-
+        
         if (!courseId || !categoryId) {
             alert("Please select both course and category first.");
             return;
         }
 
         const container = document.getElementById('questionSlots');
+        // Save existing questions before clearing container
+        const oldQuestionData = [...window.questionData];
+        
         container.innerHTML = '';
-        questionData = Array(count).fill(null);
+        // Initialize new array with existing data where available
+        window.questionData = new Array(count).fill(null).map((_, i) => 
+            preserveExisting && i < oldQuestionData.length ? oldQuestionData[i] : null
+        );
 
+        // Add new question button at the top
+        const addButton = document.createElement('button');
+        addButton.type = 'button';
+        addButton.className = 'btn btn-primary mb-3';
+        addButton.innerHTML = '➕ Add Question';
+        addButton.onclick = () => {
+            const newCount = window.questionData.length + 1;
+            document.getElementById('num_questions').value = newCount;
+            window.questionData.push(null);
+            addQuestionSlot(newCount - 1, false); // New slot should not preserve
+        };
+        container.appendChild(addButton);
+
+        // Create question slots
         for (let i = 0; i < count; i++) {
-            const wrapper = document.createElement('div');
-            wrapper.id = `question-block-${i}`;
-            wrapper.style = "margin-bottom:20px;padding:10px;border:1px solid #ddd;border-radius:5px;";
+            addQuestionSlot(i, preserveExisting);
+        }
 
-            const difficultySelect = document.createElement('select');
-            difficultySelect.name = `difficulty_select_${i}`;
-            difficultySelect.innerHTML = `
-                <option value="0">Any</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-            `;
-            difficultySelect.value = defaultDifficulties[i];
+        // Update the hidden input with question IDs
+        document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
+    };
 
-            const preview = document.createElement('div');
-            preview.id = `preview-${i}`;
-            preview.style = "margin-top:10px;padding:10px;background-color:#f9f9f9;border-radius:5px;";
-            preview.innerText = "No question loaded yet.";
+    // Update the addQuestionSlot function definition
+    function addQuestionSlot(index, preserveExisting = false) {
+        const container = document.getElementById('questionSlots');
+        const courseId = document.getElementById('course_id').value;
+        const categoryId = document.getElementById('category_id').value;
+        
+        const wrapper = document.createElement('div');
+        wrapper.id = `question-block-${index}`;
+        wrapper.className = 'question-slot mb-3 p-3 border rounded';
 
-            // --- SEARCH UI ---
-            const controlsDiv = document.createElement('div');
-            controlsDiv.style = "display:flex;gap:10px;align-items:center;margin-top:5px;position:relative;";
+        const difficultySelect = document.createElement('select');
+        difficultySelect.name = `difficulty_select_${index}`;
+        difficultySelect.className = 'form-select d-inline-block w-auto me-2';
+        difficultySelect.innerHTML = `
+            <option value="0">Any</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+        `;
 
-            const searchInput = document.createElement('input');
-            searchInput.type = 'text';
-            searchInput.placeholder = 'Search questions...';
-            searchInput.className = 'form-control form-control-sm';
-            searchInput.style = "max-width:200px;";
+        // Set default difficulty based on index
+        if (!preserveExisting && index < defaultDifficulties.length) {
+            difficultySelect.value = defaultDifficulties[index];
+            // Automatically fetch a question with this difficulty
+            setTimeout(() => fetchQuestion(index), 100);
+        }
 
-            const searchResults = document.createElement('div');
-            searchResults.className = 'search-results';
-            searchResults.style = "position:absolute;top:100%;left:0;background:white;border:1px solid #ddd;max-height:200px;overflow-y:auto;display:none;z-index:1000;width:300px;box-shadow:0 2px 4px rgba(0,0,0,0.1);margin-top:2px;border-radius:4px;";
+        const preview = document.createElement('div');
+        preview.id = `preview-${index}`;
+        preview.className = 'mt-2 p-2 bg-light rounded';
+        preview.innerText = "Click search or reroll to load a question";
 
-            function loadQuestions(searchTerm = '') {
-                const courseId = document.getElementById('course_id').value;
-                const categoryId = document.getElementById('category_id').value;
-                const difficulty = difficultySelect.value;
-                const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}&search=${encodeURIComponent(searchTerm)}&list=1`;
-                fetch(url)
+        // Search UI
+        const controlsDiv = document.createElement('div');
+        controlsDiv.className = 'd-flex gap-2 align-items-center position-relative mt-2';
+
+        const searchWrapper = document.createElement('div');
+        searchWrapper.className = 'input-group';
+        searchWrapper.style = 'max-width: 300px;';
+
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.placeholder = 'Search questions...';
+        searchInput.className = 'form-control';
+
+        const searchButton = document.createElement('button');
+        searchButton.type = 'button';
+        searchButton.className = 'btn btn-outline-secondary';
+        searchButton.innerHTML = '🔍';
+        searchButton.onclick = () => loadQuestions(searchInput.value.trim());
+
+        const rerollBtn = document.createElement('button');
+        rerollBtn.type = 'button';
+        rerollBtn.className = 'btn btn-outline-secondary';
+        rerollBtn.innerHTML = '🔄';
+        rerollBtn.onclick = () => fetchQuestion(index);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-outline-danger';
+        removeBtn.innerHTML = '❌';
+        removeBtn.onclick = () => {
+            wrapper.remove();
+            window.questionData[index] = null;
+            document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
+        };
+
+        const searchResults = document.createElement('div');
+        searchResults.className = 'search-results position-absolute bg-white border rounded';
+        searchResults.style = 'display:none; top:100%; left:0; z-index:1000; width:300px; max-height:200px; overflow-y:auto; box-shadow:0 2px 4px rgba(0,0,0,0.1);';
+
+        // Prevent form submission on enter
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                loadQuestions(this.value.trim());
+            }
+        });
+
+        function loadQuestions(searchTerm = '') {
+            const courseId = document.getElementById('course_id').value;
+            const categoryId = document.getElementById('category_id').value;
+            const difficulty = difficultySelect.value;
+            
+            fetch(`generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}&search=${encodeURIComponent(searchTerm)}&list=1`)
+                .then(res => res.json())
+                .then(data => {
+                    searchResults.innerHTML = '';
+                    if (data.questions?.length > 0) {
+                        searchResults.style.display = 'block';
+                        data.questions.forEach(q => {
+                            const div = document.createElement('div');
+                            div.className = 'p-2 border-bottom hover-bg-light cursor-pointer';
+                            div.innerHTML = `<em>${q.text}</em>`;
+                            div.onclick = () => {
+                                window.questionData[index] = q.qu_id;
+                                preview.innerHTML = `<em>${q.text}</em>`;
+                                document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
+                                searchResults.style.display = 'none';
+                                searchInput.value = '';
+                            };
+                            searchResults.appendChild(div);
+                        });
+                    }
+                });
+        }
+
+        searchWrapper.append(searchInput, searchButton);
+        controlsDiv.append(searchWrapper, rerollBtn, removeBtn, searchResults);
+
+        wrapper.innerHTML = `<strong>Question ${index + 1}</strong><br>`;
+        wrapper.appendChild(document.createTextNode("Difficulty: "));
+        wrapper.appendChild(difficultySelect);
+        wrapper.appendChild(preview);
+        wrapper.appendChild(controlsDiv);
+
+        // Insert after the Add Question button
+        container.insertBefore(wrapper, container.children[index + 1]);
+
+        // Update the preview loading section
+        if (preserveExisting && window.questionData[index]) {
+            const storedQuestionId = window.questionData[index];
+            if (typeof questionTexts !== 'undefined' && questionTexts[storedQuestionId]) {
+                // Use cached text if available (for duplicate mode)
+                preview.innerHTML = `<em>${questionTexts[storedQuestionId]}</em>`;
+            } else {
+                // Fetch from server if needed
+                fetch(`generate-test.php?action=get_random_question&category_id=${categoryId}&qu_id=${storedQuestionId}`)
                     .then(res => res.json())
                     .then(data => {
-                        searchResults.innerHTML = '';
-                        if (data.questions && data.questions.length > 0) {
-                            searchResults.style.display = 'block';
-                            data.questions.forEach(q => {
-                                const div = document.createElement('div');
-                                div.style = "padding:8px 12px;cursor:pointer;border-bottom:1px solid #eee;";
-                                div.onmouseover = () => div.style.backgroundColor = '#f5f5f5';
-                                div.onmouseout = () => div.style.backgroundColor = '';
-                                div.innerHTML = `<em>${q.text}</em>`;
-                                div.onclick = () => {
-                                    questionData[i] = q.qu_id;
-                                    preview.innerHTML = `<em>${q.text}</em>`;
-                                    document.getElementById('question_ids').value = questionData.filter(id => id).join(',');
-                                    searchResults.style.display = 'none';
-                                    searchInput.value = '';
-                                };
-                                searchResults.appendChild(div);
-                            });
-                        } else {
-                            searchResults.style.display = 'none';
+                        if (data && data.text) {
+                            preview.innerHTML = `<em>${data.text}</em>`;
                         }
                     });
             }
-            // Load 10 questions by default
-            loadQuestions();
-
-            let debounceTimer;
-            searchInput.addEventListener('input', function() {
-                clearTimeout(debounceTimer);
-                const searchTerm = this.value.trim();
-                debounceTimer = setTimeout(() => loadQuestions(searchTerm), 300);
-            });
-
-            // Hide results when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!searchResults.contains(e.target) && e.target !== searchInput) {
-                    searchResults.style.display = 'none';
-                }
-            });
-            searchInput.addEventListener('focus', () => {
-                if (searchResults.children.length > 0) {
-                    searchResults.style.display = 'block';
-                }
-            });
-            // --- END SEARCH UI ---
-
-            const rerollBtn = document.createElement('button');
-            rerollBtn.type = 'button';
-            rerollBtn.innerText = '🔄 Reroll';
-            rerollBtn.style = "margin-top:5px;";
-            rerollBtn.onclick = () => fetchQuestion(i);
-
-            controlsDiv.appendChild(searchInput);
-            controlsDiv.appendChild(searchResults);
-            controlsDiv.appendChild(rerollBtn);
-
-            wrapper.innerHTML = `<strong>Question ${i + 1}</strong><br>`;
-            wrapper.appendChild(document.createTextNode("Difficulty: "));
-            wrapper.appendChild(difficultySelect);
-            wrapper.appendChild(document.createElement('br'));
-            wrapper.appendChild(preview);
-            wrapper.appendChild(controlsDiv);
-            container.appendChild(wrapper);
-
-            setTimeout(() => fetchQuestion(i), 100 * (i + 1));
         }
-    };
+    }
 
+    // Add fetchQuestion function
     function fetchQuestion(index) {
         const courseId = document.getElementById('course_id').value;
         const categoryId = document.getElementById('category_id').value;
         const difficulty = document.querySelector(`[name="difficulty_select_${index}"]`).value;
         const preview = document.getElementById(`preview-${index}`);
 
-        if (!courseId || !categoryId) {
-            preview.innerHTML = "<span style='color:#f70;'>⚠️ Please select course and category first</span>";
-            return;
-        }
+        if (!preview) return;
 
-        preview.innerHTML = "Loading question...";
+        preview.innerHTML = "Loading...";
 
-        const url = `generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}`;
-
-        fetch(url)
+        fetch(`generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}`)
             .then(res => res.json())
-            .then(function(data) { // <-- FIX: wrap parameter in function()
+            .then(function(data) { // Fixed: Added function keyword and parentheses
                 if (data && data.qu_id) {
-                    questionData[index] = data.qu_id;
+                    window.questionData[index] = data.qu_id;
                     preview.innerHTML = `<em>${data.text}</em>`;
+                    document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
                 } else {
-                    questionData[index] = null;
                     preview.innerHTML = `<span style='color:red;'>${data.error || 'No question found'}</span>`;
                 }
-
-                document.getElementById('question_ids').value = questionData.filter(id => id).join(',');
             })
             .catch(err => {
                 preview.innerHTML = `<span style='color:red;'>Error: ${err.message}</span>`;
             });
     }
+
+    // Initial load: set course and category if in duplicate mode
+    <?php if (!empty($duplicateQuestions)): ?>
+    const questionIds = <?= json_encode($duplicateQuestions) ?>;
+    const questionTexts = <?= json_encode($duplicateQuestionTexts) ?>;
+    const questionDifficulties = <?= json_encode($duplicateQuestionDifficulties) ?>; // Add this line
+    const duplicateCourseId = <?= isset($duplicateCourseId) ? (int)$duplicateCourseId : 'null' ?>;
+    const duplicateCategoryId = <?= isset($duplicateCategoryId) ? (int)$duplicateCategoryId : 'null' ?>;
+
+    // Set the number of questions
+    document.getElementById('num_questions').value = questionIds.length;
+    
+    if (duplicateCourseId && duplicateCategoryId) {
+        // First set course and trigger category load
+        document.getElementById('course_id').value = duplicateCourseId;
+        loadCategories();
+
+        // Wait for categories to load
+        setTimeout(() => {
+            document.getElementById('category_id').value = duplicateCategoryId;
+            
+            // Disable after setting values
+            document.getElementById('course_id').disabled = true;
+            document.getElementById('category_id').disabled = true;
+            
+            buildQuestionSlots();
+
+            // Wait for slots to be built
+            setTimeout(() => {
+                window.questionData = new Array(questionIds.length); // Reset questionData
+                
+                // Fill in the questions from the database
+                for (let i = 0; i < questionIds.length; i++) {
+                    const preview = document.getElementById(`preview-${i}`);
+                    const qid = questionIds[i];
+                    if (preview && questionTexts[qid]) {
+                        preview.innerHTML = `<em>${questionTexts[qid]}</em>`;
+                        window.questionData[i] = qid;
+                        
+                        // Update difficulty select to show correct difficulty
+                        const difficultySelect = document.querySelector(`[name="difficulty_select_${i}"]`);
+                        if (difficultySelect) {
+                            difficultySelect.value = questionDifficulties[qid].toString();
+                            difficultySelect.disabled = true;
+                        }
+                    }
+                }
+                
+                document.getElementById('question_ids').value = questionIds.join(',');
+            }, 500);
+        }, 500);
+    }
+    <?php endif; ?>
 });
 
 // --- Sidebar toggle logic (fix for always working) ---
@@ -641,4 +837,5 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 })();
 </script>
+
 <?php require_once "include/footer.php"; ?>
