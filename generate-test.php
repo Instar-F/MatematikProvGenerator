@@ -647,7 +647,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        function renderPreview(q) {
+        // Move renderPreview to the outer scope so it's available everywhere
+        window.renderPreview = function(q) {
             let html = `<em>${q.text}</em>`;
             if (q.image_url) {
                 const size = q.image_size && !isNaN(q.image_size) ? parseInt(q.image_size) : 100;
@@ -665,7 +666,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
             return html;
-        }
+        };
 
         function loadQuestions(searchTerm = '') {
             const courseId = document.getElementById('course_id').value;
@@ -681,10 +682,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         data.questions.forEach(q => {
                             const div = document.createElement('div');
                             div.className = 'p-2 border-bottom hover-bg-light cursor-pointer';
-                            div.innerHTML = renderPreview(q);
+                            div.innerHTML = window.renderPreview(q);
                             div.onclick = () => {
                                 window.questionData[index] = q.qu_id;
-                                preview.innerHTML = renderPreview(q);
+                                preview.innerHTML = window.renderPreview(q);
                                 document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
                                 searchResults.style.display = 'none';
                                 searchInput.value = '';
