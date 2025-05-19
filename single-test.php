@@ -230,6 +230,7 @@ $currentPage = 'test-list.php';
             }
         }
 
+        /* --- Sidebar CSS copied from add-question.php for consistency --- */
         #sidebarColumn {
             position: fixed;
             top: 0;
@@ -256,11 +257,11 @@ $currentPage = 'test-list.php';
             margin: 0 auto;
             padding: 32px 16px 32px 16px;
         }
+        /* Sidebar toggle button styling */
         #toggleSidebar {
             position: fixed;
-            top: 50%;
+            top: 38%; /* Move above the vertical center */
             left: 0;
-            transform: translateY(-50%);
             z-index: 2100;
             border-radius: 50%;
             width: 44px;
@@ -275,7 +276,6 @@ $currentPage = 'test-list.php';
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
             transition: left 0.28s cubic-bezier(.4,0,.2,1), background 0.18s, color 0.18s;
             cursor: pointer;
-            font-size: 2rem;
         }
         #toggleSidebar.open {
             left: 320px;
@@ -288,13 +288,43 @@ $currentPage = 'test-list.php';
             color: #0a58ca;
         }
         #toggleArrow {
-            transition: transform 0.25s cubic-bezier(.4,0,.2,1);
-            font-size: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 22px;
+            height: 22px;
+            font-size: 1.7rem;
+            transition: color 0.18s;
+            position: relative;
+        }
+        .hamburger-bar {
+            display: block;
+            width: 22px;
+            height: 3px;
+            background: #0d6efd;
+            margin: 2.5px 0;
+            border-radius: 2px;
+            transition: all 0.25s;
+            box-sizing: border-box;
+        }
+        #toggleSidebar.open .hamburger-bar {
+            display: none;
+        }
+        .sidebar-close-icon {
+            display: none;
+            font-size: 1.7rem;
+            color: #0d6efd;
             line-height: 1;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+        #toggleSidebar.open .sidebar-close-icon {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: inherit;
         }
         #sidebarOverlay {
             display: none;
@@ -311,16 +341,23 @@ $currentPage = 'test-list.php';
             display: block;
             opacity: 1;
         }
+        /* --- End sidebar CSS from add-question.php --- */
 
+        /* Change preview text color */
+        .card-header.card-header-centered h1,
+        .card-header.card-header-centered {
+            color: #0d6efd !important;
+        }
+
+        /* Stack answers below questions */
         .test-preview-wrapper {
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            flex-direction: column;
+            align-items: center;
             gap: 2rem;
             padding: 2rem;
             flex-wrap: wrap;
         }
-
         .test-preview-left-panel {
             background-color: white;
             width: 794px; /* A4 width */
@@ -329,19 +366,30 @@ $currentPage = 'test-list.php';
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border: 1px solid #ccc;
             border-radius: 6px;
+            margin-bottom: 2rem;
         }
-
         .test-preview-right-panel {
-            flex: 1;
-            max-width: 600px; /* Increased from 400px to 600px */
+            width: 100%;
+            max-width: 794px;
             background: #fff;
             padding: 1.5rem;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 6px;
             overflow-y: auto;
             max-height: 1123px;
-            margin-top: 1rem;
-            min-width: 350px; /* Ensure minimum width for readability */
+            margin-top: 0;
+            min-width: 350px;
+        }
+        @media (min-width: 1200px) {
+            .test-preview-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            .test-preview-left-panel,
+            .test-preview-right-panel {
+                margin-left: auto;
+                margin-right: auto;
+            }
         }
     </style>
 </head>
@@ -452,16 +500,13 @@ $currentPage = 'test-list.php';
 </div>
 <script>
 const sidebar = document.getElementById('sidebarColumn');
-const main = document.getElementById('mainColumn');
 const toggleBtn = document.getElementById('toggleSidebar');
-const toggleArrow = document.getElementById('toggleArrow');
 const overlay = document.getElementById('sidebarOverlay');
 let sidebarVisible = false;
 
 function showSidebar() {
     sidebar.classList.add('visible');
     overlay.classList.add('visible');
-    toggleArrow.textContent = "-";
     toggleBtn.classList.remove('closed');
     toggleBtn.classList.add('open');
 }
@@ -469,7 +514,6 @@ function showSidebar() {
 function hideSidebar() {
     sidebar.classList.remove('visible');
     overlay.classList.remove('visible');
-    toggleArrow.textContent = "+";
     toggleBtn.classList.remove('open');
     toggleBtn.classList.add('closed');
 }
