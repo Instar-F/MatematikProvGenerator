@@ -25,7 +25,7 @@ if (isset($_GET['exid'])) {
     $test = $testDetails->fetch(PDO::FETCH_ASSOC);
 
     $questionsQuery = $pdo->prepare("
-        SELECT q.text, q.answer, q.total_points, q.image_url
+        SELECT q.text, q.answer, q.total_points, q.image_url, q.image_size, q.image_location
         FROM matteprovgenerator.exam_questions eq
         INNER JOIN matteprovgenerator.questions q ON eq.qu_id = q.qu_id
         WHERE eq.ex_id = :testId
@@ -389,10 +389,36 @@ $currentPage = 'test-list.php';
 
                             <?php if (!empty($questions)): ?>
                                 <?php foreach ($questions as $index => $question): ?>
-                                    <div class="question-item">
+                                    <div class="question-item" style="margin-bottom:2em;">
                                         <div><strong>Question <?= $index + 1 ?>:</strong></div>
-                                        <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
-                                        <img src="<?= strip_tags($question['image_url'])?>"> </img>
+                                        <?php
+                                        // Prepare image HTML if present
+                                        $imgHtml = '';
+                                        if (!empty($question['image_url'])) {
+                                            $imgSize = is_numeric($question['image_size']) && $question['image_size'] > 0 ? intval($question['image_size']) : 100;
+                                            $imgStyle = "max-width:{$imgSize}%;height:auto;";
+                                            $imgTag = '<img src="' . htmlspecialchars($question['image_url']) . '" style="' . $imgStyle . '" />';
+                                            $imgLoc = intval($question['image_location']);
+                                        } else {
+                                            $imgTag = '';
+                                            $imgLoc = 0;
+                                        }
+                                        ?>
+                                        <?php if ($imgTag && $imgLoc === 3): // Above ?>
+                                            <div class="question-image mb-2" style="text-align:center;"><?= $imgTag ?></div>
+                                        <?php endif; ?>
+                                        <div style="display:flex;<?= ($imgTag && ($imgLoc === 1 || $imgLoc === 2)) ? 'align-items:center;' : '' ?>">
+                                            <?php if ($imgTag && $imgLoc === 2): // Left ?>
+                                                <div class="question-image me-3"><?= $imgTag ?></div>
+                                            <?php endif; ?>
+                                            <div style="flex:1"><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                            <?php if ($imgTag && $imgLoc === 1): // Right ?>
+                                                <div class="question-image ms-3"><?= $imgTag ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if ($imgTag && $imgLoc === 4): // Below ?>
+                                            <div class="question-image mt-2" style="text-align:center;"><?= $imgTag ?></div>
+                                        <?php endif; ?>
                                         <div class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
                                     </div>
                                 <?php endforeach; ?>

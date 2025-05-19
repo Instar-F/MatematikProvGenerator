@@ -23,6 +23,8 @@ $difficulty = $_POST['difficulty'] ?? '';
 $ca_id = $_POST['ca_id'] ?? '';
 $co_id = $_POST['co_id'] ?? '';
 $image_url = null;
+$image_size = $_POST['image_size'] ?? '';
+$image_location = $_POST['image_location'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -49,10 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (!empty($question) && !empty($answer) && !empty($ca_id) && is_numeric($points) && is_numeric($difficulty) && $difficulty >= 1 && $difficulty <= 6) {
+    if (!empty($question) && !empty($answer) && !empty($ca_id) && is_numeric($points) && is_numeric($difficulty) && $difficulty >= 1 && $difficulty <= 6
+        && (empty($image_url) || (is_numeric($image_size) && is_numeric($image_location)))) {
         try {
-            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, text, answer, image_url, total_points, difficulty, teacher_fk) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$ca_id, $question, $answer, $image_url, $points, $difficulty, $_SESSION['user']['id']]);
+            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, text, answer, image_url, total_points, difficulty, teacher_fk, image_size, image_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $ca_id, $question, $answer, $image_url, $points, $difficulty, $_SESSION['user']['id'],
+                $image_url ? $image_size : null,
+                $image_url ? $image_location : null
+            ]);
             echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
         } catch (Exception $e) {
             echo "<p class='alert alert-danger'>Fel vid spara: " . $e->getMessage() . "</p>";
@@ -240,6 +247,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <div class="mb-3">
                                 <label for="image" class="form-label">Ladda upp en bild:</label>
                                 <input type="file" name="image" id="image" class="form-control">
+                            </div>
+                            <div class="mb-3">
+                                <label for="image_size" class="form-label">Bildstorlek (% av container):</label>
+                                <input type="number" name="image_size" id="image_size" class="form-control" min="1" max="100" value="<?= htmlspecialchars($image_size) ?>">
+                                <small class="form-text text-muted">Ange en procentsats, t.ex. 25 för 25%.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="image_location" class="form-label">Bildens placering:</label>
+                                <select name="image_location" id="image_location" class="form-control">
+                                    <option value="">Välj placering</option>
+                                    <option value="1" <?= $image_location == '1' ? 'selected' : '' ?>>Höger om frågan</option>
+                                    <option value="2" <?= $image_location == '2' ? 'selected' : '' ?>>Vänster om frågan</option>
+                                    <option value="3" <?= $image_location == '3' ? 'selected' : '' ?>>Ovanför frågan</option>
+                                    <option value="4" <?= $image_location == '4' ? 'selected' : '' ?>>Under frågan</option>
+                                </select>
+                                <small class="form-text text-muted">
+                                    1 = Höger, 2 = Vänster, 3 = Ovanför, 4 = Under
+                                </small>
                             </div>
 
                             <div class="mb-3">

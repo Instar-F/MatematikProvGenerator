@@ -41,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ca_id = $_POST['ca_id'] ?? null;
     $qt_id = $_POST['qt_id'] ?? null;
     $image_url = $question['image_url']; // Default to existing image
+    $image_size = $_POST['image_size'] ?? $question['image_size'];
+    $image_location = $_POST['image_location'] ?? $question['image_location'];
 
     // Handle image upload
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -68,8 +70,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($ca_id && $qt_id && !empty($text) && !empty($answer)) {
-        $updateStmt = $pdo->prepare("UPDATE matteprovgenerator.questions SET ca_id = ?, qt_id = ?, text = ?, answer = ?, total_points = ?, image_url = ? WHERE qu_id = ?");
-        $updateStmt->execute([$ca_id, $qt_id, $text, $answer, $total_points, $image_url, $questionId]);
+        $updateStmt = $pdo->prepare("UPDATE matteprovgenerator.questions SET ca_id = ?, qt_id = ?, text = ?, answer = ?, total_points = ?, image_url = ?, image_size = ?, image_location = ? WHERE qu_id = ?");
+        $updateStmt->execute([
+            $ca_id, $qt_id, $text, $answer, $total_points, $image_url, 
+            $image_url ? $image_size : null,
+            $image_url ? $image_location : null,
+            $questionId
+        ]);
 
         header("Location: assignments.php?course_id={$_POST['course_id']}&ca_id={$ca_id}");
         exit;
@@ -270,6 +277,24 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
                             </div>
                         <?php endif; ?>
                         <input type="file" name="image" id="image" class="form-control">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="image_size">Bildstorlek (% av container):</label>
+                        <input type="number" name="image_size" id="image_size" class="form-control" min="1" max="100" value="<?= htmlspecialchars($question['image_size'] ?? '') ?>">
+                        <small class="form-text text-muted">Ange en procentsats, t.ex. 25 för 25%.</small>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="image_location">Bildens placering:</label>
+                        <select name="image_location" id="image_location" class="form-control">
+                            <option value="">Välj placering</option>
+                            <option value="1" <?= ($question['image_location'] ?? '') == '1' ? 'selected' : '' ?>>Höger om frågan</option>
+                            <option value="2" <?= ($question['image_location'] ?? '') == '2' ? 'selected' : '' ?>>Vänster om frågan</option>
+                            <option value="3" <?= ($question['image_location'] ?? '') == '3' ? 'selected' : '' ?>>Ovanför frågan</option>
+                            <option value="4" <?= ($question['image_location'] ?? '') == '4' ? 'selected' : '' ?>>Under frågan</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            1 = Höger, 2 = Vänster, 3 = Ovanför, 4 = Under
+                        </small>
                     </div>
 
                     <input type="hidden" name="course_id" value="<?= $_GET['course_id'] ?? 0 ?>">

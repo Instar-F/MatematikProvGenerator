@@ -65,7 +65,7 @@ if (isset($_GET['action'])) {
 
             // --- SEARCH/LIST MODE ---
             if (isset($_GET['list']) || $search !== '') {
-                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ?";
+                $sql = "SELECT qu_id, text, image_url, image_size, image_location FROM questions WHERE ca_id = ?";
                 $params = [$categoryId];
                 $types = "i";
                 if ($difficulty > 0) {
@@ -93,7 +93,7 @@ if (isset($_GET['action'])) {
             // --- END SEARCH/LIST MODE ---
 
             if ($difficulty > 0) {
-                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND difficulty = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
+                $sql = "SELECT qu_id, text, image_url, image_size, image_location FROM questions WHERE ca_id = ? AND difficulty = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
                 $stmt = $mysqli->prepare($sql);
                 if (!$stmt) {
                     echo json_encode(['error' => 'DB prepare error: ' . $mysqli->error, 'debug' => $debug]);
@@ -101,7 +101,7 @@ if (isset($_GET['action'])) {
                 }
                 $stmt->bind_param("ii", $categoryId, $difficulty);
             } else {
-                $sql = "SELECT qu_id, text FROM questions WHERE ca_id = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
+                $sql = "SELECT qu_id, text, image_url, image_size, image_location FROM questions WHERE ca_id = ? AND is_active = 1 ORDER BY RAND() LIMIT 1";
                 $stmt = $mysqli->prepare($sql);
                 if (!$stmt) {
                     echo json_encode(['error' => 'DB prepare error: ' . $mysqli->error, 'debug' => $debug]);
@@ -647,6 +647,26 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
+        function renderPreview(q) {
+            let html = `<em>${q.text}</em>`;
+            if (q.image_url) {
+                const size = q.image_size && !isNaN(q.image_size) ? parseInt(q.image_size) : 100;
+                const style = `max-width:${size}%;height:auto;`;
+                const imgTag = `<img src="${q.image_url}" style="${style}" />`;
+                const loc = parseInt(q.image_location || 0);
+                if (loc === 3) { // above
+                    html = imgTag + "<br>" + html;
+                } else if (loc === 4) { // below
+                    html = html + "<br>" + imgTag;
+                } else if (loc === 2) { // left
+                    html = `<div style="display:flex;align-items:center;"><div class="me-2">${imgTag}</div><div>${html}</div></div>`;
+                } else if (loc === 1) { // right
+                    html = `<div style="display:flex;align-items:center;"><div>${html}</div><div class="ms-2">${imgTag}</div></div>`;
+                }
+            }
+            return html;
+        }
+
         function loadQuestions(searchTerm = '') {
             const courseId = document.getElementById('course_id').value;
             const categoryId = document.getElementById('category_id').value;
@@ -661,10 +681,10 @@ document.addEventListener("DOMContentLoaded", function () {
                         data.questions.forEach(q => {
                             const div = document.createElement('div');
                             div.className = 'p-2 border-bottom hover-bg-light cursor-pointer';
-                            div.innerHTML = `<em>${q.text}</em>`;
+                            div.innerHTML = renderPreview(q);
                             div.onclick = () => {
                                 window.questionData[index] = q.qu_id;
-                                preview.innerHTML = `<em>${q.text}</em>`;
+                                preview.innerHTML = renderPreview(q);
                                 document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
                                 searchResults.style.display = 'none';
                                 searchInput.value = '';
@@ -719,10 +739,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         fetch(`generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}`)
             .then(res => res.json())
-            .then(function(data) { // Fixed: Added function keyword and parentheses
+            .then(function(data) {
                 if (data && data.qu_id) {
                     window.questionData[index] = data.qu_id;
-                    preview.innerHTML = `<em>${data.text}</em>`;
+                    preview.innerHTML = renderPreview(data);
                     document.getElementById('question_ids').value = window.questionData.filter(id => id).join(',');
                 } else {
                     preview.innerHTML = `<span style='color:red;'>${data.error || 'No question found'}</span>`;

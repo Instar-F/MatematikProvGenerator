@@ -9,9 +9,6 @@ if(isset($_POST['login-submit'])){
 	if($result['success']){
 		header("Location: dashboard.php");
 	}
-	else {
-		echo $result['error'];
-	}
 }
 
 ?>
