@@ -35,7 +35,7 @@ if (isset($_GET['logout']) && $_GET['logout'] == "true") {
 </head>
 <body>
 
-<header>
+<header class="no-print">
     <nav class="navbar navbar-expand-lg navbar-dark py-4" style="background-color: #e0040e;">
         <div class="container">
             <a class="navbar-brand" href="index.php" style="font-size: 2em;">Axxell Ab</a>
@@ -45,7 +45,7 @@ if (isset($_GET['logout']) && $_GET['logout'] == "true") {
             </button>
             <?php if (is_logged_in()): ?>
                 <form action="" class="d-flex" method="get" role="search">
-                    <button class="btn btn-outline-light" name="logout" value="true" type="submit">Log out</button>
+                    <button class="btn btn-outline-light no-print" name="logout" value="true" type="submit">Log out</button>
                 </form>
             <?php endif ?>
         </div>

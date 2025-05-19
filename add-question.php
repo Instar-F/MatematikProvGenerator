@@ -262,9 +262,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <option value="3" <?= $image_location == '3' ? 'selected' : '' ?>>Ovanför frågan</option>
                                     <option value="4" <?= $image_location == '4' ? 'selected' : '' ?>>Under frågan</option>
                                 </select>
-                                <small class="form-text text-muted">
-                                    1 = Höger, 2 = Vänster, 3 = Ovanför, 4 = Under
-                                </small>
                             </div>
 
                             <div class="mb-3">

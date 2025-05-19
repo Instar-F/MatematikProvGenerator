@@ -218,15 +218,38 @@ $currentPage = 'test-list.php';
             }
 
             .test-preview-left-panel {
-                width: 100%;
-                box-shadow: none;
-                border: none;
-                padding: 0;
-                margin: 0;
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+
+            /* Add more space between questions for handwriting */
+            .test-preview-left-panel .question-item {
+                margin-bottom: 10em !important;
+                min-height: 5em;
+                page-break-inside: avoid;
+                break-inside: avoid;
+                orphans: 1;
+                widows: 1;
+            }
+            @page {
+                margin-top: 6cm;
+            }
+            @page :first {
+                margin-top: 2cm;
             }
 
             .test-preview-right-panel {
                 display: none;
+            }
+
+            /* Hide header and logout button while printing */
+            #header, .logout-btn, .logout, .header, .site-header {
+                display: none !important;
             }
         }
 
@@ -395,7 +418,7 @@ $currentPage = 'test-list.php';
 </head>
 <body>
 
-<button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed">
+<button id="toggleSidebar" aria-label="Toggle Sidebar" type="button" class="closed no-print">
     <span id="toggleArrow">
         <span class="hamburger-bar"></span>
         <span class="hamburger-bar"></span>
@@ -418,7 +441,7 @@ $currentPage = 'test-list.php';
         <!-- Main content -->
         <div class="col-md" id="mainColumn">
             <div class="card card-shadow">
-                <div class="card-header card-header-centered">
+                <div class="card-header card-header-centered no-print">
                     <h1>Test Preview</h1>
                 </div>
                 <div class="card-body">
@@ -444,28 +467,40 @@ $currentPage = 'test-list.php';
                                         $imgHtml = '';
                                         if (!empty($question['image_url'])) {
                                             $imgSize = is_numeric($question['image_size']) && $question['image_size'] > 0 ? intval($question['image_size']) : 100;
-                                            $imgStyle = "max-width:{$imgSize}%;height:auto;";
-                                            $imgTag = '<img src="' . htmlspecialchars($question['image_url']) . '" style="' . $imgStyle . '" />';
+                                            $imgContainerStyle = "width:{$imgSize}%;min-width:80px;text-align:center;";
+                                            $imgTag = '<img src="' . htmlspecialchars($question['image_url']) . '" style="width:100%;height:auto;display:block;" />';
+                                            $imgHtml = '<div class="question-image-container" style="' . $imgContainerStyle . '">' . $imgTag . '</div>';
                                             $imgLoc = intval($question['image_location']);
                                         } else {
                                             $imgTag = '';
+                                            $imgHtml = '';
                                             $imgLoc = 0;
                                         }
                                         ?>
-                                        <?php if ($imgTag && $imgLoc === 3): // Above ?>
-                                            <div class="question-image mb-2" style="text-align:center;"><?= $imgTag ?></div>
+                                        <?php if ($imgHtml && $imgLoc === 3): // Above ?>
+                                            <div style="display:flex;justify-content:flex-start;margin-bottom:0.5em;">
+                                                <?= $imgHtml ?>
+                                            </div>
                                         <?php endif; ?>
-                                        <div style="display:flex;<?= ($imgTag && ($imgLoc === 1 || $imgLoc === 2)) ? 'align-items:center;' : '' ?>">
-                                            <?php if ($imgTag && $imgLoc === 2): // Left ?>
-                                                <div class="question-image me-3"><?= $imgTag ?></div>
-                                            <?php endif; ?>
-                                            <div style="flex:1"><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
-                                            <?php if ($imgTag && $imgLoc === 1): // Right ?>
-                                                <div class="question-image ms-3"><?= $imgTag ?></div>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php if ($imgTag && $imgLoc === 4): // Below ?>
-                                            <div class="question-image mt-2" style="text-align:center;"><?= $imgTag ?></div>
+
+                                        <?php if ($imgHtml && ($imgLoc === 1 || $imgLoc === 2)): // Right or Left ?>
+                                            <div style="display:flex;align-items:flex-start;">
+                                                <?php if ($imgLoc === 2): // Left ?>
+                                                    <div style="align-self:flex-start;"><?= $imgHtml ?></div>
+                                                    <div style="flex:1;margin-left:1em;"><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                                <?php else: // Right ?>
+                                                    <div style="flex:1;margin-right:1em;"><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                                    <div style="align-self:flex-start;display:flex;justify-content:flex-end;"><?= $imgHtml ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php else: // No image left/right, just show text ?>
+                                            <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                        <?php endif; ?>
+
+                                        <?php if ($imgHtml && $imgLoc === 4): // Below ?>
+                                            <div style="display:flex;justify-content:flex-end;margin-top:0.5em;">
+                                                <?= $imgHtml ?>
+                                            </div>
                                         <?php endif; ?>
                                         <div class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
                                     </div>
@@ -491,7 +526,13 @@ $currentPage = 'test-list.php';
                                     <p>No answers available.</p>
                                 <?php endif; ?>
                             </div>
+                            <!-- Print Button (visible only on screen, hidden when printing) -->
                         </div>
+                    </div>
+                    <div style="width:100%;display:flex;justify-content:center;margin:2rem 0 0 0;">
+                        <button class="no-print" onclick="window.print()" style="padding:10px 22px;font-size:1.1rem;background:#0d6efd;color:#fff;border:none;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;">
+                            <i class="fas fa-print" style="margin-right:8px;"></i> Print
+                        </button>
                     </div>
                 </div>
             </div>
