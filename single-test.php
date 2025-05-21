@@ -1,6 +1,27 @@
 <?php
 require_once "include/header.php";
 
+// Improved autoWrapLatex to also wrap bare LaTeX expressions (not just inside <p>)
+function autoWrapLatex($text) {
+    // 1. Wrap <p>...</p> containing only a LaTeX command (e.g. \frac{...}{...}) with $$
+    $text = preg_replace_callback(
+        '/<p>\s*(\\\\[a-zA-Z]+(?:\{[^}]+\})+)\s*<\/p>/',
+        function($matches) {
+            return '<p>$$' . $matches[1] . '$$</p>';
+        },
+        $text
+    );
+    // 2. Wrap bare LaTeX commands on their own line (not already inside $$...$$)
+    $text = preg_replace_callback(
+        '/(^|[\s>])\\\\([a-zA-Z]+(?:\{[^}]+\})+)($|[\s<])/',
+        function($matches) {
+            return $matches[1] . '$$\\' . $matches[2] . '$$' . $matches[3];
+        },
+        $text
+    );
+    return $text;
+}
+
 if (!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
     header("Location: login.php");
     exit();
@@ -414,6 +435,62 @@ $currentPage = 'test-list.php';
                 margin-right: auto;
             }
         }
+
+        /* Add more space inside tables and question content */
+        .test-preview-left-panel .question-item {
+            /* Already has margin-bottom for writing space */
+        }
+        .test-preview-left-panel .question-item > div,
+        .test-preview-left-panel .question-item table {
+            margin-top: 1em;
+            margin-bottom: 1em;
+        }
+        .test-preview-left-panel .question-item table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5em;
+            margin-bottom: 1.5em;
+        }
+        .test-preview-left-panel .question-item th,
+        .test-preview-left-panel .question-item td {
+            padding: 1em 1.2em;
+            border: 1px solid #888;
+            font-size: 1.1em;
+        }
+        .test-preview-left-panel .question-item th {
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+        .test-preview-left-panel .question-item td {
+            background: #fff;
+        }
+        /* Add more vertical space for all question content */
+        .test-preview-left-panel .question-item p,
+        .test-preview-left-panel .question-item ul,
+        .test-preview-left-panel .question-item ol {
+            margin-top: 1em;
+            margin-bottom: 1em;
+            font-size: 1.1em;
+        }
+        /* For print, keep the extra space */
+        @media print {
+            /* ...existing code... */
+            .test-preview-left-panel .question-item table {
+                margin-top: 2em;
+                margin-bottom: 2em;
+            }
+            .test-preview-left-panel .question-item th,
+            .test-preview-left-panel .question-item td {
+                padding: 1.3em 1.5em;
+            }
+            .test-preview-left-panel .question-item p,
+            .test-preview-left-panel .question-item ul,
+            .test-preview-left-panel .question-item ol {
+                margin-top: 1.2em;
+                margin-bottom: 1.2em;
+            }
+            /* ...existing code... */
+        }
     </style>
 </head>
 <body>
@@ -487,14 +564,14 @@ $currentPage = 'test-list.php';
                                             <div style="display:flex;align-items:flex-start;">
                                                 <?php if ($imgLoc === 2): // Left ?>
                                                     <div style="align-self:flex-start;"><?= $imgHtml ?></div>
-                                                    <div style="flex:1;margin-left:1em;"><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                                    <div style="flex:1;margin-left:1em;"><?= autoWrapLatex(strip_tags($question['text'], '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>')) ?></div>
                                                 <?php else: // Right ?>
-                                                    <div style="flex:1;margin-right:1em;"><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                                    <div style="flex:1;margin-right:1em;"><?= autoWrapLatex(strip_tags($question['text'], '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>')) ?></div>
                                                     <div style="align-self:flex-start;display:flex;justify-content:flex-end;"><?= $imgHtml ?></div>
                                                 <?php endif; ?>
                                             </div>
                                         <?php else: // No image left/right, just show text ?>
-                                            <div><?= strip_tags($question['text'], '<br><ul><ol><li><strong><em>') ?></div>
+                                            <div><?= autoWrapLatex(strip_tags($question['text'], '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>')) ?></div>
                                         <?php endif; ?>
 
                                         <?php if ($imgHtml && $imgLoc === 4): // Below ?>

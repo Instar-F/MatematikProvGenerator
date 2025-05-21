@@ -30,16 +30,16 @@ if (!$question) {
 $categories = $pdo->query("SELECT ca_id, ca_name FROM categories")->fetchAll();
 
 // Prefill fields
-$prefillText = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['text'] : '';
-$prefillAnswer = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['answer'] : '';
+$prefillText = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['text'] : ($_POST['question'] ?? $question['text']);
+$prefillAnswer = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['answer'] : ($_POST['answer'] ?? $question['answer']);
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $text = $_POST['question'] ?? '';
-    $answer = $_POST['answer'] ?? '';
-    $total_points = (int)($_POST['total_points'] ?? 0);
-    $ca_id = $_POST['ca_id'] ?? null;
-    $qt_id = $_POST['qt_id'] ?? null;
+    $text = trim($_POST['question'] ?? $question['text']);
+    $answer = trim($_POST['answer'] ?? $question['answer']);
+    $total_points = (int)($_POST['total_points'] ?? $question['total_points']);
+    $ca_id = $_POST['ca_id'] ?? $question['ca_id'];
+    $qu_id = $_POST['qu_id'] ?? $question['qu_id'];
     $image_url = $question['image_url']; // Default to existing image
     $image_size = $_POST['image_size'] ?? $question['image_size'];
     $image_location = $_POST['image_location'] ?? $question['image_location'];
@@ -69,10 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if ($ca_id && $qt_id && !empty($text) && !empty($answer)) {
-        $updateStmt = $pdo->prepare("UPDATE matteprovgenerator.questions SET ca_id = ?, qt_id = ?, text = ?, answer = ?, total_points = ?, image_url = ?, image_size = ?, image_location = ? WHERE qu_id = ?");
+    // Fix: Use $question values as fallback for all fields, not just text/answer
+    if ($ca_id && $qu_id && strlen($text) > 0 && strlen($answer) > 0) {
+        $updateStmt = $pdo->prepare("UPDATE matteprovgenerator.questions SET ca_id = ?, qu_id = ?, text = ?, answer = ?, total_points = ?, image_url = ?, image_size = ?, image_location = ? WHERE qu_id = ?");
         $updateStmt->execute([
-            $ca_id, $qt_id, $text, $answer, $total_points, $image_url, 
+            $ca_id, $qu_id, $text, $answer, $total_points, $image_url, 
             $image_url ? $image_size : null,
             $image_url ? $image_location : null,
             $questionId

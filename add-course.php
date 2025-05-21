@@ -18,16 +18,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = $_POST['description'];
 
     if (!empty($courseName)) {
-        $stmt = $conn->prepare("INSERT INTO courses (co_name, description) VALUES (?, ?)");
-        $stmt->bind_param("ss", $courseName, $description);
-
-        if ($stmt->execute()) {
+        try {
+            $stmt = $pdo->prepare("INSERT INTO courses (co_name, description) VALUES (?, ?)");
+            $stmt->execute([$courseName, $description]);
             $successMessage = "Course added successfully!";
-        } else {
-            $errorMessage = "Error: " . $stmt->error;
+        } catch (PDOException $e) {
+            $errorMessage = "Error: " . $e->getMessage();
         }
-
-        $stmt->close();
     } else {
         $errorMessage = "Please fill in the course name.";
     }
