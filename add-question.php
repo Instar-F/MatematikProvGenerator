@@ -61,6 +61,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $image_url ? $image_location : null
             ]);
             echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
+            // Clear all fields after successful insert
+            $question = '';
+            $answer = '';
+            $points = '';
+            $difficulty = '';
+            $ca_id = '';
+            $co_id = '';
+            $image_url = null;
+            $image_size = '';
+            $image_location = '';
         } catch (Exception $e) {
             echo "<p class='alert alert-danger'>Fel vid spara: " . $e->getMessage() . "</p>";
         }

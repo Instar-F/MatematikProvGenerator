@@ -3,22 +3,35 @@ require_once "include/header.php";
 
 // Improved autoWrapLatex to also wrap bare LaTeX expressions (not just inside <p>)
 function autoWrapLatex($text) {
-    // 1. Wrap <p>...</p> containing only a LaTeX command (e.g. \frac{...}{...}) with $$
+    // 1. Wrap each <p>...</p> containing a LaTeX command or math formula as its own display block (not joined)
     $text = preg_replace_callback(
-        '/<p>\s*(\\\\[a-zA-Z]+(?:\{[^}]+\})+)\s*<\/p>/',
+        '/<p>\s*([^\n<]+)\s*<\/p>/i',
         function($matches) {
-            return '<p>$$' . $matches[1] . '$$</p>';
+            $content = trim($matches[1]);
+            // Accept any content that contains at least one backslash or equals sign as a candidate for math
+            $looksLikeMath = (strpos($content, '\\') !== false || strpos($content, '=') !== false);
+            $open = substr_count($content, '{');
+            $close = substr_count($content, '}');
+            $endsWithIncompleteCommand = preg_match('/\\\\[a-zA-Z]+\s*$/', $content);
+            $endsWithOpenBrace = (substr(rtrim($content), -1) === '{');
+            // Only wrap if braces are balanced and not obviously incomplete
+            if ($looksLikeMath && $open === $close && !$endsWithIncompleteCommand && !$endsWithOpenBrace) {
+                return '<p>$$' . $content . '$$</p>';
+            }
+            return '<p>' . $content . '</p>';
         },
         $text
     );
     // 2. Wrap bare LaTeX commands on their own line (not already inside $$...$$)
     $text = preg_replace_callback(
-        '/(^|[\s>])\\\\([a-zA-Z]+(?:\{[^}]+\})+)($|[\s<])/',
+        '/(^|[\s>])\\\\([a-zA-Z]+(?:\{[^}]+\})+)($|[\s<])/u',
         function($matches) {
             return $matches[1] . '$$\\' . $matches[2] . '$$' . $matches[3];
         },
         $text
     );
+    // 3. Remove any accidental double-wrapping of $$...$$ inside <p>...</p>
+    $text = preg_replace('/<p>\s*\$\$(.*?)\$\$\s*<\/p>/s', '<p>$$$1$$</p>', $text);
     return $text;
 }
 
@@ -166,27 +179,103 @@ $currentPage = 'test-list.php';
             padding: 1rem;
             margin-top: 2rem;
         }
-
         .answers-section-title {
             margin-bottom: 1.5rem;
             font-size: 1.2rem;
             text-align: center;
             color: #333;
         }
-
         .answer-item {
-            margin-bottom: 1rem;
+            margin-bottom: 2.5em;
         }
-
         .answer-item-title {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.7em;
             font-size: 1.1rem;
             color: #444;
         }
-
         .answer-item-content {
-            font-size: 1rem;
-            line-height: 1.5;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+        /* Match answer tables to question tables */
+        .answer-item-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5em;
+            margin-bottom: 1.5em;
+            /* Fix: Prevent table from being forced to a new page in print */
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .answer-item-content th,
+        .answer-item-content td {
+            padding: 1em 1.2em;
+            border: 1px solid #888;
+            font-size: 1.1em;
+        }
+        .answer-item-content th {
+            background: #f2f2f2;
+            font-weight: bold;
+        }
+        .answer-item-content td {
+            background: #fff;
+        }
+        .answer-item-content p,
+        .answer-item-content ul,
+        .answer-item-content ol {
+            margin-top: 1em;
+            margin-bottom: 1em;
+            font-size: 1.1em;
+        }
+        @media print {
+            .answer-item-content table {
+                margin-top: 2em;
+                margin-bottom: 2em;
+            }
+            .answer-item-content th,
+            .answer-item-content td {
+                padding: 1.3em 1.5em;
+            }
+            .answer-item-content p,
+            .answer-item-content ul,
+            .answer-item-content ol {
+                margin-top: 1.2em;
+                margin-bottom: 1.2em;
+            }
+        }
+        /* Print button styling */
+        .print-btn-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0 0 0;
+        }
+        .print-btn {
+            padding: 14px 36px;
+            font-size: 1.2rem;
+            background: #0d6efd;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(13,110,253,0.13); /* Use button color for shadow */
+            cursor: pointer;
+            transition: background 0.18s, box-shadow 0.18s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .print-btn:hover, .print-btn:focus {
+            background: #084298;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+        }
+        .print-btn i {
+            font-size: 1.3em;
+            vertical-align: middle;
+        }
+        .print-btn * {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
         img {
@@ -593,9 +682,22 @@ $currentPage = 'test-list.php';
                                 <?php if (!empty($questions)): ?>
                                     <?php foreach ($questions as $index => $question): ?>
                                         <?php if (!empty($question['answer'])): ?>
+                                            <?php
+                                            // Ensure the answer HTML is well-formed by using DOMDocument to auto-close tags
+                                            $allowed = '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>';
+                                            $rawAnswer = strip_tags($question['answer'], $allowed);
+                                            // Use DOMDocument to fix broken HTML
+                                            $dom = new DOMDocument();
+                                            libxml_use_internal_errors(true);
+                                            $dom->loadHTML('<?xml encoding="utf-8" ?><div>' . $rawAnswer . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+                                            $fixedAnswer = $dom->saveHTML($dom->getElementsByTagName('div')->item(0));
+                                            libxml_clear_errors();
+                                            ?>
                                             <div class="answer-item">
                                                 <h5 class="answer-item-title">Question <?= $index + 1 ?>:</h5>
-                                                <div class="answer-item-content"><?= nl2br(strip_tags($question['answer'], '<br><ul><ol><li><strong><em>')) ?></div>
+                                                <div class="answer-item-content">
+                                                    <?= autoWrapLatex($fixedAnswer) ?>
+                                                </div>
                                             </div>
                                         <?php endif; ?>
                                     <?php endforeach; ?>
@@ -606,9 +708,10 @@ $currentPage = 'test-list.php';
                             <!-- Print Button (visible only on screen, hidden when printing) -->
                         </div>
                     </div>
-                    <div style="width:100%;display:flex;justify-content:center;margin:2rem 0 0 0;">
-                        <button class="no-print" onclick="window.print()" style="padding:10px 22px;font-size:1.1rem;background:#0d6efd;color:#fff;border:none;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,0.12);cursor:pointer;">
-                            <i class="fas fa-print" style="margin-right:8px;"></i> Print
+                    <div class="print-btn-wrapper">
+                        <button class="no-print print-btn" onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            <span>Print</span>
                         </button>
                     </div>
                 </div>

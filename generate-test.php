@@ -268,6 +268,39 @@ if (isset($_GET['duplicate']) && is_numeric($_GET['duplicate'])) {
         }
     }
 }
+
+// Add this function at the top, after opening PHP tag and before any HTML output
+function autoWrapLatex($text) {
+    // 1. Wrap <p>...</p> containing only a LaTeX command (e.g. \frac{...}{...}) with $$
+    $text = preg_replace_callback(
+        '/<p>\s*(\\\\[a-zA-Z]+(?:\{[^}]+\})+)\s*<\/p>/',
+        function($matches) {
+            return '<p>$$' . $matches[1] . '$$</p>';
+        },
+        $text
+    );
+    // 2. Wrap bare LaTeX commands on their own line (not already inside $$...$$)
+    $text = preg_replace_callback(
+        '/(^|[\s>])\\\\([a-zA-Z]+(?:\{[^}]+\})+)($|[\s<])/',
+        function($matches) {
+            return $matches[1] . '$$\\' . $matches[2] . '$$' . $matches[3];
+        },
+        $text
+    );
+    // 3. Wrap lines that look like math formulas (e.g. W = F \cdot s) with $$
+    $text = preg_replace_callback(
+        '/(^|\n)([A-Za-z0-9_\\\{\}\^\s\=\+\-\*\/\(\)\.,:;·\[\]\\\\]+=[^<\n]+)(\n|$)/m',
+        function($matches) {
+            // Only wrap if not already inside $$
+            if (strpos($matches[2], '$$') === false) {
+                return $matches[1] . '$$' . trim($matches[2]) . '$$' . $matches[3];
+            }
+            return $matches[0];
+        },
+        $text
+    );
+    return $text;
+}
 ?>
 
 <style>
