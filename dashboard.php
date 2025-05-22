@@ -164,14 +164,16 @@ footer, .footer {
                     Admin Dashboard
                 </div>
                 <div class="card-body">
-                    <h2 class="dashboard-welcome text-center">Welcome to the Admin Dashboard</h2>
-                    <p class="dashboard-description mt-4">
-                        Here you can manage users, create and assign tests, add courses and categories, and perform other administrative tasks. 
-                        Use the links on the left to navigate through the available options. <br>
-                        As an administrator, you have access to powerful tools for organizing mathematics assignments and exams. 
-                        You can add new questions, edit existing ones, and structure your content by courses and categories. 
-                        The user management section allows you to control access and roles for all users in the system.
-                    </p>
+                    <div style="margin-left: 18px; margin-right: 18px;">
+                        <h2 class="dashboard-welcome text-center">Welcome to the Admin Dashboard</h2>
+                        <p class="dashboard-description mt-4">
+                            Here you can manage users, create and assign tests, add courses and categories, and perform other administrative tasks. 
+                            Use the links on the left to navigate through the available options. <br>
+                            As an administrator, you have access to powerful tools for organizing mathematics assignments and exams. 
+                            You can add new questions, edit existing ones, and structure your content by courses and categories. 
+                            The user management section allows you to control access and roles for all users in the system.
+                        </p>
+                    </div>
                 </div>
                 <div class="card-footer text-center">
                     <small class="dashboard-footer text-muted">Admin Panel - MatematikProvGenerator</small>

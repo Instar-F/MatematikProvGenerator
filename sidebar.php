@@ -26,8 +26,11 @@ if (!in_array($currentPage, $sidebarPages) && isset($_SERVER['HTTP_REFERER'])) {
 }
 ?>
 <div class="card shadow-lg h-100 d-flex">
-    <div class="card-body p-0 d-flex align-items-center">
-        <div class="list-group w-100">
+    <div class="card-body p-0 d-flex flex-column align-items-stretch">
+        <h2 class="text-center py-3 mb-0" style="font-size:1.4rem; font-weight:600; border-bottom:1px solid #eee;">
+         Navigation
+        </h2>
+            <div class="list-group w-100" style="margin-top:0;">
             <!-- Styled Links -->
             <a href="generate-test.php" class="list-group-item list-group-item-action btn-outline-primary <?= $currentPage === 'generate-test.php' ? 'active' : '' ?>">
                 Generate Test

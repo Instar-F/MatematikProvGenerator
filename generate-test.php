@@ -78,7 +78,9 @@ if (isset($_GET['action'])) {
                     $params[] = "%$search%";
                     $types .= "s";
                 }
-                $sql .= " AND is_active = 1 GROUP BY text ORDER BY RAND() LIMIT 5";
+                $sql .= " AND is_active = 1 GROUP BY text ORDER BY RAND()";
+                $limit = isset($_GET['limit']) && is_numeric($_GET['limit']) ? (int)$_GET['limit'] : 5;
+                $sql .= " LIMIT $limit";
                 $stmt = $mysqli->prepare($sql);
                 $stmt->bind_param($types, ...$params);
                 $stmt->execute();
@@ -124,7 +126,7 @@ if (isset($_GET['action'])) {
 
                 if ($countResult['count'] > 0) {
                     echo json_encode([
-                        'error' => 'No questions found with the selected difficulty. Try "Any difficulty".',
+                        'error' => 'No questions found with the selected difficulty.',
                         'debug' => $debug
                     ]);
                 } else {
@@ -612,7 +614,6 @@ document.addEventListener("DOMContentLoaded", function () {
         difficultySelect.name = `difficulty_select_${index}`;
         difficultySelect.className = 'form-select d-inline-block w-auto me-2';
         difficultySelect.innerHTML = `
-            <option value="0">Any</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -627,6 +628,11 @@ document.addEventListener("DOMContentLoaded", function () {
             // Automatically fetch a question with this difficulty
             setTimeout(() => fetchQuestion(index), 100);
         }
+
+        // Fetch question immediately when difficulty changes
+        difficultySelect.addEventListener('change', function() {
+            fetchQuestion(index);
+        });
 
         const preview = document.createElement('div');
         preview.id = `preview-${index}`;
@@ -672,11 +678,28 @@ document.addEventListener("DOMContentLoaded", function () {
         searchResults.className = 'search-results position-absolute bg-white border rounded';
         searchResults.style = 'display:none; top:100%; left:0; z-index:1000; width:300px; max-height:200px; overflow-y:auto; box-shadow:0 2px 4px rgba(0,0,0,0.1);';
 
+        // Show search results after every letter typed (debounced)
+        let searchTimeout;
+        let searchInitialized = false;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadQuestions(searchInput.value.trim());
+            }, 120);
+        });
+
+        // Show first 10 questions on first focus
+        searchInput.addEventListener('focus', function() {
+            if (!searchInitialized) {
+                loadQuestions('', 10);
+                searchInitialized = true;
+            }
+        });
+
         // Prevent form submission on enter
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                loadQuestions(this.value.trim());
             }
         });
 
@@ -701,12 +724,12 @@ document.addEventListener("DOMContentLoaded", function () {
             return html;
         };
 
-        function loadQuestions(searchTerm = '') {
+        // Modified loadQuestions to accept a limit parameter
+        function loadQuestions(searchTerm = '', limit = 5) {
             const courseId = document.getElementById('course_id').value;
             const categoryId = document.getElementById('category_id').value;
             const difficulty = difficultySelect.value;
-            
-            fetch(`generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}&search=${encodeURIComponent(searchTerm)}&list=1`)
+            fetch(`generate-test.php?action=get_random_question&course_id=${courseId}&category_id=${categoryId}&difficulty=${difficulty}&search=${encodeURIComponent(searchTerm)}&list=1&limit=${limit}`)
                 .then(res => res.json())
                 .then(data => {
                     searchResults.innerHTML = '';
@@ -725,6 +748,9 @@ document.addEventListener("DOMContentLoaded", function () {
                             };
                             searchResults.appendChild(div);
                         });
+                    } else {
+                        searchResults.style.display = 'block';
+                        searchResults.innerHTML = "<div class='p-2 text-muted'>No questions found for this difficulty and search.</div>";
                     }
                 });
         }
