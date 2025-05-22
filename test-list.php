@@ -12,20 +12,43 @@ if (!$result) {
     exit(); // Stop the script from continuing
 }
 
-$testList["data"] = $pdo->query("
-			SELECT ex_id, ex_name, created_at, u_uname
-			FROM exams INNER JOIN users
-            ON exams.ex_createdby_fk = users.u_id
-			LIMIT 10")->fetchAll();
+// Pagination setup
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+
+// Count total tests for pagination
+$totalTests = $pdo->query("SELECT COUNT(*) FROM exams")->fetchColumn();
+$totalPages = ceil($totalTests / $perPage);
+
+// Search logic
+$where = '';
+$params = [];
+if(isset($_POST['searchuser-submit'])){
+    $testName = $_POST['testname'];
+    $where = "WHERE ex_name LIKE ?";
+    $params[] = "%$testName%";
+    // Recount for search
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM exams $where");
+    $countStmt->execute($params);
+    $totalTests = $countStmt->fetchColumn();
+    $totalPages = ceil($totalTests / $perPage);
+}
+
+// Fetch paginated tests (with or without search)
+$sql = "
+    SELECT ex_id, ex_name, created_at, u_uname
+    FROM exams INNER JOIN users
+    ON exams.ex_createdby_fk = users.u_id
+    $where
+    ORDER BY created_at DESC
+    LIMIT $perPage OFFSET $offset
+";
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$testList["data"] = $stmt->fetchAll();
 			
 //print_r($userList["data"]);
-
-if(isset($_POST['searchuser-submit'])){
-	
-	$testName = $_POST['testname'];
-	$testList = $user_obj->searchTests($testName);
-	//print_r($userList);
-}
 
 ?>
 
@@ -211,6 +234,25 @@ if(isset($_POST['searchuser-submit'])){
                         <?php endif; ?>
                     </tbody>
                 </table>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <?php if ($page > 1): ?>
+                        <form action="" method="GET" class="mb-0">
+                            <input type="hidden" name="page" value="<?= max(1, $page - 1) ?>">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">Previous</button>
+                        </form>
+                    <?php else: ?>
+                        <div></div>
+                    <?php endif; ?>
+                    <span>Page <?= $page ?> of <?= $totalPages ?></span>
+                    <?php if ($page < $totalPages): ?>
+                        <form action="" method="GET" class="mb-0">
+                            <input type="hidden" name="page" value="<?= min($totalPages, $page + 1) ?>">
+                            <button type="submit" class="btn btn-outline-primary btn-sm">Next</button>
+                        </form>
+                    <?php else: ?>
+                        <div></div>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </div>
