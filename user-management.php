@@ -12,21 +12,44 @@ if (!$result) {
     exit(); // Stop the script from continuing
 }
 
-$userList["data"] = $pdo->query("
-			SELECT u_id, u_uname, u_mail, r_name, r_level 
-			FROM users 
-			INNER JOIN roles 
-			ON users.u_role_fk = roles.r_id
-			LIMIT 10")->fetchAll();
+// Pagination setup
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$perPage = 10;
+$offset = ($page - 1) * $perPage;
+
+// Count total users for pagination
+$totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$totalPages = ceil($totalUsers / $perPage);
+
+// Search logic
+$where = '';
+$params = [];
+if(isset($_POST['searchuser-submit'])){
+    $userName = $_POST['uname'];
+    $where = "WHERE u_uname LIKE ?";
+    $params[] = "%$userName%";
+    // Recount for search
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM users $where");
+    $countStmt->execute($params);
+    $totalUsers = $countStmt->fetchColumn();
+    $totalPages = ceil($totalUsers / $perPage);
+}
+
+// Fetch paginated users (with or without search), oldest first
+$sql = "
+    SELECT u_id, u_uname, u_mail, r_name, r_level 
+    FROM users 
+    INNER JOIN roles 
+    ON users.u_role_fk = roles.r_id
+    $where
+    ORDER BY u_id ASC
+    LIMIT $perPage OFFSET $offset
+";
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
+$userList["data"] = $stmt->fetchAll();
 			
 //print_r($userList["data"]);
-
-if(isset($_POST['searchuser-submit'])){
-	
-	$userName = $_POST['uname'];
-	$userList = $user_obj->searchUsers($userName);
-	//print_r($userList);
-}
 
 ?>
 
@@ -196,17 +219,15 @@ if(isset($_POST['searchuser-submit'])){
                                 <tbody>
                                 <?php 
                                 if(!empty($userList["data"])):
-                                foreach ($userList["data"] as $userRow): 
-                                    if ($_SESSION['user']['role'] == 300 && $userRow['r_level'] == 900) {
-                                        continue;
-                                    }
-                                ?>
+                                foreach ($userList["data"] as $userRow): ?>
                                     <tr>
                                         <td><?= htmlspecialchars($userRow['u_uname']) ?></td>
                                         <td><?= htmlspecialchars($userRow['u_mail']) ?></td>
                                         <td><?= htmlspecialchars($userRow['r_name']) ?></td>
                                         <td class="text-center">
-                                            <a href="edit-user.php?uid=<?= htmlspecialchars($userRow['u_id']) ?>" class="btn btn-sm btn-outline-primary" style="display:inline-block;min-width:70px;">Show</a>
+                                            <?php if ($_SESSION['user']['role'] == 900 || $_SESSION['user']['role'] >= $userRow['r_level']): ?>
+                                                <a href="edit-user.php?uid=<?= htmlspecialchars($userRow['u_id']) ?>" class="btn btn-sm btn-outline-primary" style="display:inline-block;min-width:70px;">Show</a>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php
@@ -217,6 +238,25 @@ if(isset($_POST['searchuser-submit'])){
                                 ?>
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <?php if ($page > 1): ?>
+                                <form action="" method="GET" class="mb-0">
+                                    <input type="hidden" name="page" value="<?= max(1, $page - 1) ?>">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Previous</button>
+                                </form>
+                            <?php else: ?>
+                                <div></div>
+                            <?php endif; ?>
+                            <span>Page <?= $page ?> of <?= $totalPages ?></span>
+                            <?php if ($page < $totalPages): ?>
+                                <form action="" method="GET" class="mb-0">
+                                    <input type="hidden" name="page" value="<?= min($totalPages, $page + 1) ?>">
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">Next</button>
+                                </form>
+                            <?php else: ?>
+                                <div></div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
