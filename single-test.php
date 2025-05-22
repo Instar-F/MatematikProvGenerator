@@ -668,12 +668,14 @@ $currentPage = 'test-list.php';
                                         } else {
                                             echo $question['text'];
                                         }
+                                        ?>
 
-                                        <?php if ($imgHtml && $imgLoc === 4): // Below ?>
+                                        <?php if (isset($imgHtml) && isset($question['image_location']) && $question['image_location'] === '4'): ?>
                                             <div style="display:flex;justify-content:flex-end;margin-top:0.5em;">
                                                 <?= $imgHtml ?>
                                             </div>
                                         <?php endif; ?>
+
                                         <div class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
                                     </div>
                                 <?php endforeach; ?>
