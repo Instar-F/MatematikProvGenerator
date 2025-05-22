@@ -14,6 +14,18 @@ if (!$result) {
 
 $courseId = isset($_GET['course_id']) ? (int)$_GET['course_id'] : null;
 $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
+
+if (!function_exists('strip_latex')) {
+    function strip_latex($text) {
+        // Remove $...$, \[...\], \(...\)
+        $text = preg_replace('/\$(.*?)\$/s', '', $text);
+        $text = preg_replace('/\\\\\[(.*?)\\\\\]/s', '', $text);
+        $text = preg_replace('/\\\\\((.*?)\\\\\)/s', '', $text);
+        // Remove <p> and </p> and any other HTML tags
+        $text = strip_tags($text);
+        return trim($text);
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -131,6 +143,47 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
         display: block;
         opacity: 1;
     }
+    .course-card {
+        min-height: 150px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: box-shadow 0.18s;
+        cursor: pointer;
+        padding: 0.5rem 0.75rem;
+    }
+    .course-card .card-body {
+        padding: 0.75rem 0.5rem;
+    }
+    .course-card .card-title {
+        font-size: 1.05rem;
+        margin-bottom: 0.75rem;
+    }
+    .category-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    .category-list li {
+        padding: 0.15rem 0;
+        font-size: 0.97rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .category-list li:last-child {
+        border-bottom: none;
+    }
+    .category-link {
+        /* Remove color and underline for plain text look */
+        color: inherit;
+        text-decoration: none;
+        transition: none;
+        cursor: pointer;
+    }
+    .category-link:hover {
+        color: inherit;
+        text-decoration: none;
+    }
     </style>
 </head>
 <body class="bg-light">
@@ -170,11 +223,31 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
                         ?>
                             <div class="row">
                                 <?php foreach ($courses as $course): ?>
-                                    <div class="col-md-4 mb-4">
-                                        <div class="card course-card" onclick="location.href='?course_id=<?= $course['co_id'] ?>'">
-                                            <div class="card-body">
-                                                <h5 class="card-title"><?= htmlspecialchars($course['co_name']) ?></h5>
-                                                <p class="card-text"><?= htmlspecialchars($course['description']) ?></p>
+                                    <?php
+                                    // Fetch categories for this course
+                                    $stmt = $pdo->prepare("SELECT * FROM matteprovgenerator.categories WHERE ca_co_fk = ?");
+                                    $stmt->execute([$course['co_id']]);
+                                    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                    ?>
+                                    <div class="col-md-4 mb-4 d-flex">
+                                        <div class="card course-card h-100 w-100"
+                                             onclick="location.href='?course_id=<?= $course['co_id'] ?>'"
+                                             style="cursor:pointer;">
+                                            <div class="card-body d-flex flex-column">
+                                                <h5 class="card-title mb-3"><?= htmlspecialchars($course['co_name']) ?></h5>
+                                                <ul class="category-list flex-grow-1">
+                                                    <?php if (count($categories) > 0): ?>
+                                                        <?php foreach ($categories as $category): ?>
+                                                            <li>
+                                                                <a class="category-link" href="?course_id=<?= $course['co_id'] ?>&category_id=<?= $category['ca_id'] ?>">
+                                                                    <?= htmlspecialchars($category['ca_name']) ?>
+                                                                </a>
+                                                            </li>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        <li class="text-muted">No categories</li>
+                                                    <?php endif; ?>
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>
@@ -191,10 +264,44 @@ $categoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : null;
                             <h1 class="centered-header">Select a Category</h1>
                             <div class="row">
                                 <?php foreach ($categories as $category): ?>
-                                    <div class="col-md-4 mb-4">
-                                        <div class="card category-card" onclick="location.href='?course_id=<?= $courseId ?>&category_id=<?= $category['ca_id'] ?>'">
-                                            <div class="card-body">
-                                                <h5 class="card-title"><?= htmlspecialchars($category['ca_name']) ?></h5>
+                                    <?php
+                                    // Fetch 5 latest questions for this category
+                                    $qstmt = $pdo->prepare("SELECT * FROM matteprovgenerator.questions WHERE ca_id = ? ORDER BY qu_id DESC LIMIT 5");
+                                    $qstmt->execute([$category['ca_id']]);
+                                    $latestQuestions = $qstmt->fetchAll(PDO::FETCH_ASSOC);
+                                    ?>
+                                    <div class="col-md-4 mb-4 d-flex">
+                                        <div class="card category-card h-100 w-100"
+                                             onclick="location.href='?course_id=<?= $courseId ?>&category_id=<?= $category['ca_id'] ?>';"
+                                             style="cursor:pointer; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
+                                            <div class="card-body d-flex flex-column" style="padding:0.6rem 0.5rem;">
+                                                <h5 class="card-title mb-2" style="font-size:1rem;"><?= htmlspecialchars($category['ca_name']) ?></h5>
+                                                <ul class="list-group list-group-flush flex-grow-1" style="margin-bottom:0.3rem;">
+                                                    <?php if (count($latestQuestions) > 0): ?>
+                                                        <?php foreach ($latestQuestions as $question): ?>
+                                                            <?php
+                                                            $plain = strip_latex($question['text']);
+                                                            $preview = mb_substr($plain, 0, 40);
+                                                            if (mb_strlen($plain) > 40) {
+                                                                $preview .= '...';
+                                                            }
+                                                            ?>
+                                                            <li class="list-group-item px-0 py-1"
+                                                                style="border:0; background:transparent; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                                <a href="edit-question.php?id=<?= $question['qu_id'] ?>"
+                                                                   style="text-decoration:none; color:inherit; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;"
+                                                                   onclick="event.stopPropagation();">
+                                                                    <?= htmlspecialchars($preview) ?>
+                                                                </a>
+                                                            </li>
+                                                        <?php endforeach; ?>
+                                                    <?php else: ?>
+                                                        <li class="list-group-item px-0 py-1 text-muted"
+                                                            style="border:0; background:transparent; font-size:0.95rem;">
+                                                            No questions yet
+                                                        </li>
+                                                    <?php endif; ?>
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>

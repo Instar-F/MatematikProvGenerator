@@ -29,14 +29,15 @@ if (!$question) {
 // Fetch categories and question types
 $categories = $pdo->query("SELECT ca_id, ca_name FROM categories")->fetchAll();
 
-// Prefill fields
+// Prefill fields (do not decode HTML here, keep raw for CKEditor)
 $prefillText = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['text'] : ($_POST['question'] ?? $question['text']);
 $prefillAnswer = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['answer'] : ($_POST['answer'] ?? $question['answer']);
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $text = trim($_POST['question'] ?? $question['text']);
-    $answer = trim($_POST['answer'] ?? $question['answer']);
+    // Strip all HTML tags from input before saving
+    $text = trim(strip_tags($_POST['question'] ?? $question['text']));
+    $answer = trim(strip_tags($_POST['answer'] ?? $question['answer']));
     $total_points = (int)($_POST['total_points'] ?? $question['total_points']);
     $ca_id = $_POST['ca_id'] ?? $question['ca_id'];
     $qu_id = $_POST['qu_id'] ?? $question['qu_id'];
@@ -257,12 +258,12 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
 
                     <div class="form-group mb-3">
                         <label for="question">Fråga:</label>
-                        <textarea name="question" id="question" class="form-control"><?= htmlspecialchars_decode($prefillText); ?></textarea>
+                        <textarea name="question" id="question" class="form-control"><?= htmlspecialchars($prefillText); ?></textarea>
                     </div>
 
                     <div class="form-group mb-3">
                         <label for="answer">Svar:</label>
-                        <textarea name="answer" id="answer" class="form-control"><?= htmlspecialchars_decode($prefillAnswer); ?></textarea>
+                        <textarea name="answer" id="answer" class="form-control"><?= htmlspecialchars($prefillAnswer); ?></textarea>
                     </div>
 
                     <div class="form-group mb-3">
@@ -362,6 +363,30 @@ hideSidebar();
             window.initCkEditor();
         }
     }, 100);
+</script>
+
+<!-- CKEditor -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+let questionEditor, answerEditor;
+ClassicEditor
+    .create(document.querySelector('#question'))
+    .then(editor => { questionEditor = editor; })
+    .catch(error => { console.error(error); });
+
+ClassicEditor
+    .create(document.querySelector('#answer'))
+    .then(editor => { answerEditor = editor; })
+    .catch(error => { console.error(error); });
+
+// Optional: If you want to strip HTML tags before submitting (client-side as well)
+document.querySelector('form').addEventListener('submit', function(e) {
+    // Get plain text from CKEditor before submit
+    if (questionEditor && answerEditor) {
+        document.querySelector('#question').value = questionEditor.getData().replace(/<[^>]+>/g, '').trim();
+        document.querySelector('#answer').value = answerEditor.getData().replace(/<[^>]+>/g, '').trim();
+    }
+});
 </script>
 
 <?php require_once "include/footer.php"; ?>
