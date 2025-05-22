@@ -217,8 +217,8 @@ if (!function_exists('strip_latex')) {
                     </div>
                     <div class="card-body">
                         <?php
-                        // Step 1: No course or category selected → show courses
-                        if (!$courseId && !$categoryId): 
+                        // Step 1: No course selected → show courses and their categories
+                        if (!$courseId): 
                             $courses = $pdo->query("SELECT * FROM matteprovgenerator.courses")->fetchAll(PDO::FETCH_ASSOC);
                         ?>
                             <div class="row">
@@ -231,7 +231,6 @@ if (!function_exists('strip_latex')) {
                                     ?>
                                     <div class="col-md-4 mb-4 d-flex">
                                         <div class="card course-card h-100 w-100"
-                                             onclick="location.href='?course_id=<?= $course['co_id'] ?>'"
                                              style="cursor:pointer;">
                                             <div class="card-body d-flex flex-column">
                                                 <h5 class="card-title mb-3"><?= htmlspecialchars($course['co_name']) ?></h5>
@@ -254,76 +253,49 @@ if (!function_exists('strip_latex')) {
                                 <?php endforeach; ?>
                             </div>
                         <?php
-                        // Step 2: Course selected, show categories
-                        elseif ($courseId && !$categoryId): 
-                            $stmt = $pdo->prepare("SELECT * FROM matteprovgenerator.categories WHERE ca_co_fk = ?");
-                            $stmt->execute([$courseId]);
-                            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                        ?>
-                            <a href="assignments.php" class="btn btn-secondary mb-4">⬅️ Back to Courses</a>
-                            <h1 class="centered-header">Select a Category</h1>
-                            <div class="row">
-                                <?php foreach ($categories as $category): ?>
-                                    <?php
-                                    // Fetch 5 latest questions for this category
-                                    $qstmt = $pdo->prepare("SELECT * FROM matteprovgenerator.questions WHERE ca_id = ? ORDER BY qu_id DESC LIMIT 5");
-                                    $qstmt->execute([$category['ca_id']]);
-                                    $latestQuestions = $qstmt->fetchAll(PDO::FETCH_ASSOC);
-                                    ?>
-                                    <div class="col-md-4 mb-4 d-flex">
-                                        <div class="card category-card h-100 w-100"
-                                             onclick="location.href='?course_id=<?= $courseId ?>&category_id=<?= $category['ca_id'] ?>';"
-                                             style="cursor:pointer; min-height:120px; display:flex; flex-direction:column; justify-content:space-between;">
-                                            <div class="card-body d-flex flex-column" style="padding:0.6rem 0.5rem;">
-                                                <h5 class="card-title mb-2" style="font-size:1rem;"><?= htmlspecialchars($category['ca_name']) ?></h5>
-                                                <ul class="list-group list-group-flush flex-grow-1" style="margin-bottom:0.3rem;">
-                                                    <?php if (count($latestQuestions) > 0): ?>
-                                                        <?php foreach ($latestQuestions as $question): ?>
-                                                            <?php
-                                                            $plain = strip_latex($question['text']);
-                                                            $preview = mb_substr($plain, 0, 40);
-                                                            if (mb_strlen($plain) > 40) {
-                                                                $preview .= '...';
-                                                            }
-                                                            ?>
-                                                            <li class="list-group-item px-0 py-1"
-                                                                style="border:0; background:transparent; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                                                                <a href="edit-question.php?id=<?= $question['qu_id'] ?>"
-                                                                   style="text-decoration:none; color:inherit; font-size:0.95rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;"
-                                                                   onclick="event.stopPropagation();">
-                                                                    <?= htmlspecialchars($preview) ?>
-                                                                </a>
-                                                            </li>
-                                                        <?php endforeach; ?>
-                                                    <?php else: ?>
-                                                        <li class="list-group-item px-0 py-1 text-muted"
-                                                            style="border:0; background:transparent; font-size:0.95rem;">
-                                                            No questions yet
-                                                        </li>
-                                                    <?php endif; ?>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php
-                        // Step 3: Course + Category selected, show questions
+                        // Step 2: Course + Category selected, show questions
                         elseif ($courseId && $categoryId):
+                            // Fetch all categories for the current course for a dropdown
+                            $catStmt = $pdo->prepare("SELECT * FROM matteprovgenerator.categories WHERE ca_co_fk = ?");
+                            $catStmt->execute([$courseId]);
+                            $allCategories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+
+                            // Always define $questions as array to avoid undefined variable error
+                            $questions = [];
                             $stmt = $pdo->prepare("SELECT * FROM matteprovgenerator.questions WHERE ca_id = ?");
                             $stmt->execute([$categoryId]);
                             $questions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         ?>
-                            <a href="assignments.php?course_id=<?= $courseId ?>" class="btn btn-secondary mb-4">⬅️ Back to Categories</a>
+                            <div class="d-flex align-items-center mb-4">
+                                <a href="assignments.php" class="btn btn-secondary me-3">⬅️ Back to Categories</a>
+                                <form method="get" class="d-inline-block">
+                                    <label for="categorySelect" class="me-2 mb-0 fw-bold">Change category:</label>
+                                    <input type="hidden" name="course_id" value="<?= $courseId ?>">
+                                    <select id="categorySelect" name="category_id" class="form-select d-inline-block" style="width:auto;display:inline-block;" onchange="this.form.submit()">
+                                        <?php foreach ($allCategories as $cat): ?>
+                                            <option value="<?= $cat['ca_id'] ?>" <?= $cat['ca_id'] == $categoryId ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($cat['ca_name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </form>
+                            </div>
                             <h1 class="centered-header">Questions</h1>
+                            <?php if (count($questions) > 0): ?>
                             <ul class="list-group">
                                 <?php foreach ($questions as $question): ?>
+                                    <?php
+                                    $plain = strip_latex($question['text']);
+                                    ?>
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        <?= htmlspecialchars($question['text']) ?>
+                                        <?= htmlspecialchars($plain) ?>
                                         <a href="edit-question.php?id=<?= $question['qu_id'] ?>" class="btn btn-primary btn-sm">Edit</a>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
+                            <?php else: ?>
+                                <div class="alert alert-info mt-3 mb-0">There are no questions in this category.</div>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
