@@ -59,7 +59,7 @@ if (isset($_GET['exid'])) {
     $test = $testDetails->fetch(PDO::FETCH_ASSOC);
 
     $questionsQuery = $pdo->prepare("
-        SELECT q.text, q.answer, q.total_points, q.image_url, q.image_size, q.image_location
+        SELECT q.text, q.answer, q.total_points, q.image_url, q.image_size, q.image_location, q.image_align
         FROM matteprovgenerator.exam_questions eq
         INNER JOIN matteprovgenerator.questions q ON eq.qu_id = q.qu_id
         WHERE eq.ex_id = :testId
@@ -619,7 +619,10 @@ $currentPage = 'test-list.php';
                                     <strong>Name:</strong> __________________
                                 </div>
                                 <div>
-                                    <strong>Points:</strong> ________/36p<br>
+                                    <?php 
+                                    $totalPoints = array_sum(array_column($questions, 'total_points')); 
+                                    ?>
+                                    <strong>Points:</strong> ________/<?= $totalPoints ?>p<br>
                                     <strong>Grade:</strong>
                                 </div>
                             </div>
@@ -632,36 +635,39 @@ $currentPage = 'test-list.php';
                                         // Prepare image HTML if present
                                         $imgHtml = '';
                                         if (!empty($question['image_url'])) {
-                                            $imgSize = is_numeric($question['image_size']) && $question['image_size'] > 0 ? intval($question['image_size']) : 100;
-                                            $imgContainerStyle = "width:{$imgSize}%;min-width:80px;text-align:center;";
-                                            $imgTag = '<img src="' . htmlspecialchars($question['image_url']) . '" style="width:100%;height:auto;display:block;" />';
-                                            $imgHtml = '<div class="question-image-container" style="' . $imgContainerStyle . '">' . $imgTag . '</div>';
-                                            $imgLoc = intval($question['image_location']);
-                                        } else {
-                                            $imgTag = '';
-                                            $imgHtml = '';
-                                            $imgLoc = 0;
-                                        }
-                                        ?>
-                                        <?php if ($imgHtml && $imgLoc === 3): // Above ?>
-                                            <div style="display:flex;justify-content:flex-start;margin-bottom:0.5em;">
-                                                <?= $imgHtml ?>
-                                            </div>
-                                        <?php endif; ?>
+                                            $pageWidth = 794 - (2 * 40); // A4 width minus margins
+                                            $calculatedWidth = floor(($pageWidth * intval($question['image_size'])) / 100);
+                                            
+                                            $imgStyle = ($question['image_location'] === '3' || $question['image_location'] === '4') 
+                                                ? "width:{$calculatedWidth}px;height:{$question['image_height']}px;object-fit:contain;" 
+                                                : "width:{$calculatedWidth}px;height:auto;";
+                                            
+                                            $imgHtml = "<img src='{$question['image_url']}' style='{$imgStyle}'>";
+                                            $imgContainerStyle = "text-align:{$question['image_align']};";
 
-                                        <?php if ($imgHtml && ($imgLoc === 1 || $imgLoc === 2)): // Right or Left ?>
-                                            <div style="display:flex;align-items:flex-start;">
-                                                <?php if ($imgLoc === 2): // Left ?>
-                                                    <div style="align-self:flex-start;"><?= $imgHtml ?></div>
-                                                    <div style="flex:1;margin-left:1em;"><?= autoWrapLatex(strip_tags($question['text'], '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>')) ?></div>
-                                                <?php else: // Right ?>
-                                                    <div style="flex:1;margin-right:1em;"><?= autoWrapLatex(strip_tags($question['text'], '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>')) ?></div>
-                                                    <div style="align-self:flex-start;display:flex;justify-content:flex-end;"><?= $imgHtml ?></div>
-                                                <?php endif; ?>
-                                            </div>
-                                        <?php else: // No image left/right, just show text ?>
-                                            <div><?= autoWrapLatex(strip_tags($question['text'], '<br><ul><ol><li><strong><em><table><tbody><tr><td><th><thead><tfoot><figure><p>')) ?></div>
-                                        <?php endif; ?>
+                                            if ($question['image_location'] === '1' || $question['image_location'] === '2') {
+                                                $flexStyle = "display:flex;align-items:flex-start;gap:1em;";
+                                                echo "<div style='{$flexStyle}'>";
+                                                if ($question['image_location'] === '2') { // Left
+                                                    echo "<div style='flex:{$question['image_size']};{$imgContainerStyle}'>{$imgHtml}</div>";
+                                                    echo "<div style='flex:" . (100 - intval($question['image_size'])) . "'>" . $question['text'] . "</div>";
+                                                } else { // Right
+                                                    echo "<div style='flex:" . (100 - intval($question['image_size'])) . "'>" . $question['text'] . "</div>";
+                                                    echo "<div style='flex:{$question['image_size']};{$imgContainerStyle}'>{$imgHtml}</div>";
+                                                }
+                                                echo "</div>";
+                                            } else {
+                                                if ($question['image_location'] === '3') { // Top
+                                                    echo "<div style='{$imgContainerStyle}'>{$imgHtml}</div>";
+                                                }
+                                                echo $question['text'];
+                                                if ($question['image_location'] === '4') { // Bottom
+                                                    echo "<div style='{$imgContainerStyle}'>{$imgHtml}</div>";
+                                                }
+                                            }
+                                        } else {
+                                            echo $question['text'];
+                                        }
 
                                         <?php if ($imgHtml && $imgLoc === 4): // Below ?>
                                             <div style="display:flex;justify-content:flex-end;margin-top:0.5em;">

@@ -51,14 +51,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (!empty($question) && !empty($answer) && !empty($ca_id) && is_numeric($points) && is_numeric($difficulty) && $difficulty >= 1 && $difficulty <= 6
-        && (empty($image_url) || (is_numeric($image_size) && is_numeric($image_location)))) {
+    // Add image_align to the SQL insert
+    if (!empty($question) && !empty($answer)) {
         try {
-            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, text, answer, image_url, total_points, difficulty, teacher_fk, image_size, image_location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO questions (ca_id, text, answer, image_url, total_points, difficulty, teacher_fk, image_size, image_location, image_align, image_valign) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                $ca_id, $question, $answer, $image_url, $points, $difficulty, $_SESSION['user']['id'],
+                $ca_id, 
+                $question, 
+                $answer, 
+                $image_url, 
+                $points, 
+                $difficulty, 
+                $_SESSION['user']['id'],
                 $image_url ? $image_size : null,
-                $image_url ? $image_location : null
+                $image_url ? $image_location : null,
+                $image_url ? $_POST['image_align'] : null,
+                $image_url ? $_POST['image_valign'] : null
             ]);
             echo "<p class='alert alert-success'>Frågan har sparats framgångsrikt!</p>";
             // Clear all fields after successful insert
@@ -81,6 +89,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <style>
+/* Clean up main layout */
+.page-centered-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 16px;
+}
+
+/* Preview styling to match single-test */
+.preview-panel {
+    background: white;
+    padding: 2rem;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.preview-page {
+    width: 100%;
+    background: white;
+}
+
+.preview-content {
+    font-size: 11pt;
+    line-height: 1.6;
+}
+
+/* Question preview styling */
+.question-preview-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.question-preview-item {
+    margin-bottom: 2em;
+}
+
+.question-preview-points {
+    text-align: right;
+    margin-top: 0.5rem;
+    font-weight: bold;
+    color: #666;
+}
+
+/* Sidebar styles */
 #sidebarColumn {
     position: fixed;
     top: 0;
@@ -99,18 +153,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     transform: translateX(0);
     opacity: 1;
 }
-#mainColumn {
-    transition: none;
-}
-.page-centered-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 16px 32px 16px;
-}
-/* Sidebar toggle button styling */
+
+/* Toggle button styling */
 #toggleSidebar {
     position: fixed;
-    top: 38%; /* Move above the vertical center */
+    top: 38%;
     left: 0;
     z-index: 2100;
     border-radius: 50%;
@@ -205,103 +252,162 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </button>
 <div id="sidebarOverlay"></div>
 
-<div class="container-fluid page-centered-container mt-4">
+<div class="container-fluid page-centered-container">
     <div class="row" id="contentRow">
         <!-- Sidebar -->
-        <div class="col-md ps-0" id="sidebarColumn">
+        <div class="col-md-3 ps-0" id="sidebarColumn">
             <?php require_once "sidebar.php"; ?>
         </div>
-        <!-- Main content -->
-        <div class="col-md" id="mainColumn">
-            <div class="container mt-5">
-                <div class="card shadow-lg">
-                    <div class="card-header">
-                        Lägg till fråga
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="course" class="form-label">Kurs:</label>
-                                <select name="co_id" id="course" class="form-control" onchange="filterCategories()">
-                                    <option value="">Välj en kurs</option>
-                                    <?php foreach ($courses as $course): ?>
-                                        <option value="<?= $course['co_id']; ?>" <?= $course['co_id'] == $co_id ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($course['co_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+        <!-- Main Content -->
+        <div class="col-md-9" id="mainColumn">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <h2 class="mb-0">Lägg till fråga</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Form Section -->
+                        <div class="col-md-6">
+                            <form method="POST" enctype="multipart/form-data" id="questionForm">
+                                <div class="mb-3">
+                                    <label for="course" class="form-label">Kurs:</label>
+                                    <select name="co_id" id="course" class="form-control" onchange="filterCategories()">
+                                        <option value="">Välj en kurs</option>
+                                        <?php foreach ($courses as $course): ?>
+                                            <option value="<?= $course['co_id']; ?>" <?= $course['co_id'] == $co_id ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($course['co_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-                            <div class="mb-3">
-                                <label for="category" class="form-label">Kategori:</label>
-                                <select name="ca_id" id="category" class="form-control">
-                                    <option value="">Välj en kategori</option>
-                                    <?php foreach ($categories as $category): ?>
-                                        <option value="<?= $category['ca_id']; ?>" data-course="<?= $category['ca_co_fk']; ?>" <?= $category['ca_id'] == $ca_id ? 'selected' : '' ?>>
-                                            <?= htmlspecialchars($category['ca_name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Kategori:</label>
+                                    <select name="ca_id" id="category" class="form-control">
+                                        <option value="">Välj en kategori</option>
+                                        <?php foreach ($categories as $category): ?>
+                                            <option value="<?= $category['ca_id']; ?>" data-course="<?= $category['ca_co_fk']; ?>" <?= $category['ca_id'] == $ca_id ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($category['ca_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-                            <div class="mb-3">
-                                <label for="question" class="form-label">Fråga:</label>
-                                <textarea name="question" id="question"><?= htmlspecialchars($question) ?></textarea>
-                            </div>
+                                <div class="mb-4">
+                                    <label for="question" class="form-label">Fråga:</label>
+                                    <textarea name="question" id="question"><?= htmlspecialchars($question) ?></textarea>
+                                </div>
 
-                            <div class="mb-3">
-                                <label for="answer" class="form-label">Svar:</label>
-                                <textarea name="answer" id="answer"><?= htmlspecialchars($answer) ?></textarea>
-                            </div>
+                                <div class="mb-4">
+                                    <label for="answer" class="form-label">Svar:</label>
+                                    <textarea name="answer" id="answer"><?= htmlspecialchars($answer) ?></textarea>
+                                </div>
 
-                            <div class="mb-3">
-                                <label for="image" class="form-label">Ladda upp en bild:</label>
-                                <input type="file" name="image" id="image" class="form-control">
-                            </div>
-                            <div class="mb-3">
-                                <label for="image_size" class="form-label">Bildstorlek (% av container):</label>
-                                <input type="number" name="image_size" id="image_size" class="form-control" min="1" max="100" value="<?= htmlspecialchars($image_size) ?>">
-                                <small class="form-text text-muted">Ange en procentsats, t.ex. 25 för 25%.</small>
-                            </div>
-                            <div class="mb-3">
-                                <label for="image_location" class="form-label">Bildens placering:</label>
-                                <select name="image_location" id="image_location" class="form-control">
-                                    <option value="">Välj placering</option>
-                                    <option value="1" <?= $image_location == '1' ? 'selected' : '' ?>>Höger om frågan</option>
-                                    <option value="2" <?= $image_location == '2' ? 'selected' : '' ?>>Vänster om frågan</option>
-                                    <option value="3" <?= $image_location == '3' ? 'selected' : '' ?>>Ovanför frågan</option>
-                                    <option value="4" <?= $image_location == '4' ? 'selected' : '' ?>>Under frågan</option>
-                                </select>
-                            </div>
+                                <div class="mb-4">
+                                    <label for="image" class="form-label">Bild (valfritt):</label>
+                                    <input type="file" name="image" id="image" class="form-control" accept="image/*">
+                                    
+                                    <div class="image-controls mt-3" id="imageControls" style="display:none;">
+                                        <!-- Location buttons -->
+                                        <div class="btn-group w-100 mb-3">
+                                            <button type="button" class="btn btn-outline-primary location-btn" data-location="2">
+                                                <i class="fas fa-arrow-left"></i> Vänster
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary location-btn" data-location="1">
+                                                Höger <i class="fas fa-arrow-right"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary location-btn" data-location="3">
+                                                <i class="fas fa-arrow-up"></i> Över
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary location-btn" data-location="4">
+                                                Under <i class="fas fa-arrow-down"></i>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="image_location" id="image_location" value="">
 
-                            <div class="mb-3">
-                                <label for="points" class="form-label">Poäng för frågan:</label>
-                                <input type="number" name="points" id="points" class="form-control" value="<?= htmlspecialchars($points) ?>">
-                            </div>
+                                        <!-- Width controls - always shown -->
+                                        <div id="widthControl" class="mb-3">
+                                            <label class="form-label d-flex justify-content-between">
+                                                Bildbredd: <span id="sizeValue">50%</span>
+                                            </label>
+                                            <input type="range" class="form-range" name="image_size" id="image_size" 
+                                                   min="10" max="100" step="5" value="50">
+                                        </div>
 
-                            <div class="mb-3">
-                                <label for="difficulty" class="form-label">Svårighetsgrad (1–6):</label>
-                                <input type="number" name="difficulty" id="difficulty" min="1" max="6" class="form-control" value="<?= htmlspecialchars($difficulty) ?>" onkeydown="replaceDifficulty(event, this)">
-                            </div>
+                                        <!-- Vertical alignment for left/right -->
+                                        <div id="verticalAlignControls" class="mb-3" style="display:none;">
+                                            <label class="form-label">Vertikal justering:</label>
+                                            <div class="btn-group w-100">
+                                                <button type="button" class="btn btn-outline-secondary valign-btn active" data-valign="flex-start">
+                                                    <i class="fas fa-arrow-up"></i> Topp
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="center">
+                                                    <i class="fas fa-arrows-alt-v"></i> Mitten
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="flex-end">
+                                                    <i class="fas fa-arrow-down"></i> Botten
+                                                </button>
+                                            </div>
+                                        </div>
 
-                            <div class="mb-3 d-flex justify-content-start">
-                                <button type="button" id="previewButton" class="btn btn-outline-secondary me-2">Förhandsgranska</button>
+                                        <!-- Horizontal alignment for top/bottom -->
+                                        <div id="alignmentControls" class="mb-3" style="display:none;">
+                                            <label class="form-label">Justering:</label>
+                                            <div class="btn-group w-100">
+                                                <button type="button" class="btn btn-outline-secondary align-btn active" data-align="flex-start">
+                                                    <i class="fas fa-align-left"></i> Vänster
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary align-btn" data-align="center">
+                                                    <i class="fas fa-align-center"></i> Mitten
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary align-btn" data-align="flex-end">
+                                                    <i class="fas fa-align-right"></i> Höger
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" name="image_align" id="image_align" value="flex-start">
+                                        <input type="hidden" name="image_valign" id="image_valign" value="flex-start">
+                                    </div>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-6">
+                                        <label for="points" class="form-label">Poäng:</label>
+                                        <input type="number" name="points" id="points" class="form-control" value="<?= htmlspecialchars($points) ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="difficulty" class="form-label">Svårighetsgrad (1-6):</label>
+                                        <input type="number" name="difficulty" id="difficulty" min="1" max="6" class="form-control" value="<?= htmlspecialchars($difficulty) ?>">
+                                    </div>
+                                </div>
+
                                 <button type="submit" class="btn btn-success">Spara till databas</button>
-                            </div>
-                        </form>
-                        <div id="previewCard" class="mt-4 p-3 border rounded" style="display: none; background-color: #f9f9f9;">
-                            <h5>Förhandsgranskning</h5>
-                            <div id="previewError" class="alert alert-danger" style="display: none;">
-                                Du måste skriva något i antingen frågan eller svaret för att förhandsgranska.
-                            </div>
-                            <h6>Fråga:</h6>
-                            <div id="previewQuestion" class="mb-3"></div>
-                            <h6>Svar:</h6>
-                            <div id="previewAnswer"></div>
+                            </form>
                         </div>
-                    </div>
-                    <div class="card-footer text-muted text-center">
-                        <small>MatematikProvGenerator - Lägg till Fråga</small>
+
+                        <!-- Preview Section -->
+                        <div class="col-md-6">
+                            <div class="preview-panel">
+                                <div class="preview-page">
+                                    <div class="question-preview-header">
+                                        <div>
+                                            <strong>Test Preview</strong><br>
+                                            <strong>Namn:</strong> __________________
+                                        </div>
+                                        <div>
+                                            <strong>Fråga:</strong> 1<br>
+                                            <strong>Poäng:</strong> <span id="previewPoints">0</span>p
+                                        </div>
+                                    </div>
+                                    <div class="question-preview-item">
+                                        <div><strong>Fråga 1:</strong></div>
+                                        <div id="questionPreview" class="preview-content"></div>
+                                        <div class="question-preview-points">_____/<span class="points-value">0</span>p</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -338,38 +444,199 @@ function replaceDifficulty(event, input) {
 let questionEditor, answerEditor;
 
 ClassicEditor
-    .create(document.querySelector('#question'))
-    .then(editor => { questionEditor = editor; })
+    .create(document.querySelector('#question'), {
+        removePlugins: ['Markdown'],
+        toolbar: ['heading', '|', 'bold', 'italic', '|', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
+    })
+    .then(editor => {
+        questionEditor = editor;
+        editor.model.document.on('change:data', () => {
+            updatePreview();
+        });
+        // Only run initial preview after editor is ready
+        updatePreview();
+    })
     .catch(error => { console.error(error); });
 
 ClassicEditor
-    .create(document.querySelector('#answer'))
-    .then(editor => { answerEditor = editor; })
+    .create(document.querySelector('#answer'), {
+        removePlugins: ['Markdown'],
+        toolbar: ['heading', '|', 'bold', 'italic', '|', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
+    })
+    .then(editor => {
+        answerEditor = editor;
+    })
     .catch(error => { console.error(error); });
 
-document.getElementById('previewButton').addEventListener('click', function () {
-    const question = questionEditor.getData().trim();
-    const answer = answerEditor.getData().trim();
-
-    const previewCard = document.getElementById('previewCard');
-    const previewQuestion = document.getElementById('previewQuestion');
-    const previewAnswer = document.getElementById('previewAnswer');
-    const previewError = document.getElementById('previewError');
-
-    previewCard.style.display = 'block';
-
-    if (question === '' && answer === '') {
-        previewError.style.display = 'block';
-        previewQuestion.innerHTML = '';
-        previewAnswer.innerHTML = '';
+// Show image controls when an image is selected
+document.getElementById('image').addEventListener('change', function() {
+    const controls = document.getElementById('imageControls');
+    if (this.files.length > 0) {
+        controls.style.display = 'block';
+        // Don't set any default location
+        document.getElementById('image_location').value = '';
+        
+        // Reset all buttons and controls
+        document.querySelectorAll('.location-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById('verticalAlignControls').style.display = 'none';
+        document.getElementById('alignmentControls').style.display = 'none';
     } else {
-        previewError.style.display = 'none';
-        previewQuestion.innerHTML = question;
-        previewAnswer.innerHTML = answer;
-        MathJax.typeset();
+        controls.style.display = 'none';
     }
+    updatePreview();
 });
 
+// Add debouncing function before the event handlers
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Update size handler with proper binding for 'this'
+document.getElementById('image_size').addEventListener('input', debounce(function(e) {
+    document.getElementById('sizeValue').textContent = e.target.value + '%';
+    updatePreview();
+}, 50)); // 50ms delay
+
+// Add button handlers (replace existing align-btn handlers)
+document.querySelectorAll('.align-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const align = this.dataset.align;
+        document.getElementById('image_align').value = align;
+        updatePreview();
+    });
+});
+
+// Add vertical alignment button handler
+document.querySelectorAll('.valign-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.valign-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('image_valign').value = this.dataset.valign;
+        updatePreview();
+    });
+});
+
+// Fix width value display on load
+document.getElementById('sizeValue').textContent = document.getElementById('image_size').value + '%';
+
+// Update preview function
+function updatePreview() {
+    if (!questionEditor) return;
+    
+    const questionContent = questionEditor.getData();
+    const imageInput = document.getElementById('image');
+    const imageLocation = document.getElementById('image_location').value;
+    const imageSize = document.getElementById('image_size').value;
+    const imageAlign = document.getElementById('image_align').value || 'left';
+    const imageValign = document.getElementById('image_valign').value || 'flex-start';
+    
+    let imgHtml = '';
+    if (imageInput.files && imageInput.files[0]) {
+        const imgUrl = URL.createObjectURL(imageInput.files[0]);
+        imgHtml = `<img src="${imgUrl}" style="width:100%;height:auto;">`;
+    }
+
+    let previewHtml = '';
+    if (imgHtml && imageLocation) {
+        if (imageLocation === '1' || imageLocation === '2') { // Left or Right
+            const questionWidth = 100 - parseInt(imageSize);
+            const flexStyle = `display:flex;align-items:${imageValign};gap:1em;margin:0;`;
+            
+            if (imageLocation === '1') { // Right
+                previewHtml = `<div style="${flexStyle}">
+                    <div style="width:${questionWidth}%;">${questionContent}</div>
+                    <div style="width:${imageSize}%;">${imgHtml}</div>
+                </div>`;
+            } else { // Left
+                previewHtml = `<div style="${flexStyle}">
+                    <div style="width:${imageSize}%;">${imgHtml}</div>
+                    <div style="width:${questionWidth}%;">${questionContent}</div>
+                </div>`;
+            }
+        } else if (imageLocation === '3' || imageLocation === '4') { // Top or Bottom
+            const margin = {
+                'flex-start': '0 auto 0 0',     // Left align
+                'center': '0 auto',             // Center align
+                'flex-end': '0 0 0 auto'        // Right align
+            };
+            const imgStyle = `width:${imageSize}%;margin:${margin[imageAlign]};display:block;`;
+            const wrappedImg = `<img src="${imageInput.files[0] ? URL.createObjectURL(imageInput.files[0]) : ''}" style="${imgStyle}">`;
+            previewHtml = `<div>
+                ${imageLocation === '3' ? wrappedImg : ''}
+                <div>${questionContent}</div>
+                ${imageLocation === '4' ? wrappedImg : ''}
+            </div>`;
+        }
+    } else {
+        previewHtml = questionContent;
+    }
+
+    document.getElementById('questionPreview').innerHTML = previewHtml;
+    if (window.MathJax) {
+        MathJax.typesetPromise([document.getElementById('questionPreview')]);
+    }
+}
+
+// Update location button handler
+document.querySelectorAll('.location-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.location-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const location = this.dataset.location;
+        document.getElementById('image_location').value = location;
+        
+        const isHorizontal = location === '1' || location === '2';
+        const sizeInput = document.getElementById('image_size');
+        const currentSize = parseInt(sizeInput.value);
+        
+        document.getElementById('alignmentControls').style.display = isHorizontal ? 'none' : 'block';
+        document.getElementById('verticalAlignControls').style.display = isHorizontal ? 'block' : 'none';
+        
+        // Update max width and adjust current value if needed
+        if (isHorizontal && currentSize > 50) {
+            sizeInput.max = '50';
+            sizeInput.value = '50';
+            document.getElementById('sizeValue').textContent = '50%';
+        } else if (!isHorizontal && sizeInput.max === '50') {
+            sizeInput.max = '100';
+            // Keep the current value as it will be valid for vertical
+        }
+        
+        // Reset alignments
+        if (isHorizontal) {
+            document.querySelector('.valign-btn[data-valign="flex-start"]').click();
+        } else {
+            document.querySelector('.align-btn[data-align="flex-start"]').click();
+        }
+        
+        updatePreview();
+    });
+});
+
+// Update points in preview when changed
+document.getElementById('points').addEventListener('input', function() {
+    const points = this.value || '0';
+    document.getElementById('previewPoints').textContent = points;
+    document.querySelector('.points-value').textContent = points;
+});
+
+// Initial preview
+updatePreview();
+</script>
+
+<script>
 const sidebar = document.getElementById('sidebarColumn');
 const main = document.getElementById('mainColumn');
 const toggleBtn = document.getElementById('toggleSidebar');
