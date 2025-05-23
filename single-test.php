@@ -631,9 +631,8 @@ $currentPage = 'test-list.php';
                             <?php if (!empty($questions)): ?>
                                 <?php foreach ($questions as $index => $question): ?>
                                     <div class="question-item" style="margin-bottom:1em;">
-                                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5em;">
+                                        <div style="margin-bottom:0.5em;">
                                             <strong>Question <?= $index + 1 ?>:</strong>
-                                            <span class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</span>
                                         </div>
                                         <div class="question-content">
                                             <?php 
@@ -691,6 +690,9 @@ $currentPage = 'test-list.php';
                                                 echo $questionContent;
                                             }
                                             ?>
+                                        </div>
+                                        <div style="text-align: right; margin-top: 0.5em;">
+                                            <span class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</span>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
