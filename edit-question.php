@@ -1,97 +1,198 @@
 <?php
 require_once "include/header.php";
 
-// Check user authentication and role
 if (!$user_obj->checkLoginStatus($_SESSION['user']['id'])) {
     header("Location: login.php");
-}
-
-$result = $user_obj->checkUserRole($_SESSION['user']['role'], 100);
-if (!$result) {
-    echo "You do not have the rights to access this page.";
     exit();
 }
 
-// Get the question ID from URL
-$questionId = isset($_GET['id']) ? (int)$_GET['id'] : null;
-if (!$questionId) {
-    die('Invalid question ID.');
+$result = $user_obj->checkUserRole($_SESSION['user']['role'], 100);
+
+if (!$result) {
+    echo "You do not have the rights to access this page.";
+    exit(); // Stop the script from continuing
 }
 
-// Fetch the question
-$stmt = $pdo->prepare("SELECT * FROM matteprovgenerator.questions WHERE qu_id = ?");
-$stmt->execute([$questionId]);
-$question = $stmt->fetch(PDO::FETCH_ASSOC);
-if (!$question) {
-    die('Question not found.');
+$courses = $pdo->query("SELECT co_id, co_name FROM courses")->fetchAll();
+$categories = $pdo->query("SELECT ca_id, ca_name, ca_co_fk FROM categories")->fetchAll();
+
+$question = '';
+$answer = '';
+$points = '';
+$difficulty = '';
+$ca_id = '';
+$co_id = '';
+$image_url = null;
+$image_size = '';
+$image_location = '';
+
+if (isset($_GET['id'])) {
+    $questionId = (int)$_GET['id'];
+    $stmt = $pdo->prepare("SELECT * FROM questions WHERE qu_id = ?");
+    $stmt->execute([$questionId]);
+    $existingQuestion = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$existingQuestion) {
+        die('Question not found.');
+    }
+
+    // Pre-fill form values from existing data
+    $question = $_POST['question'] ?? $existingQuestion['text'];
+    $answer = $_POST['answer'] ?? $existingQuestion['answer'];
+    $points = $_POST['points'] ?? $existingQuestion['total_points'];
+    $difficulty = $_POST['difficulty'] ?? $existingQuestion['difficulty'];
+    $ca_id = $_POST['ca_id'] ?? $existingQuestion['ca_id'];
+    $image_url = isset($_POST['delete_image']) ? null : $existingQuestion['image_url'];
+    $image_size = $_POST['image_size'] ?? $existingQuestion['image_size'] ?? '50';
+    $image_location = $_POST['image_location'] ?? $existingQuestion['image_location'] ?? '';
+    $image_align = $_POST['image_align'] ?? $existingQuestion['image_align'] ?? 'center';
+    $image_valign = $_POST['image_valign'] ?? $existingQuestion['image_valign'] ?? 'center';
+} else {
+    die('No question ID provided.');
 }
 
-// Fetch categories and question types
-$categories = $pdo->query("SELECT ca_id, ca_name FROM categories")->fetchAll();
-
-// Prefill fields (do not decode HTML here, keep raw for CKEditor)
-$prefillText = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['text'] : ($_POST['question'] ?? $question['text']);
-$prefillAnswer = $_SERVER['REQUEST_METHOD'] === 'GET' ? $question['answer'] : ($_POST['answer'] ?? $question['answer']);
-
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Strip all HTML tags from input before saving
-    $text = trim(strip_tags($_POST['question'] ?? $question['text']));
-    $answer = trim(strip_tags($_POST['answer'] ?? $question['answer']));
-    $total_points = (int)($_POST['total_points'] ?? $question['total_points']);
-    $ca_id = $_POST['ca_id'] ?? $question['ca_id'];
-    $qu_id = $_POST['qu_id'] ?? $question['qu_id'];
-    $image_url = $question['image_url']; // Default to existing image
-    $image_size = $_POST['image_size'] ?? $question['image_size'];
-    $image_location = $_POST['image_location'] ?? $question['image_location'];
-
-    // Handle image upload
-    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-        $uploadDir = __DIR__ . '/uploads/';
-        $webPathBase = 'uploads/';
-        $tmpFile = $_FILES['image']['tmp_name'];
-        $originalName = $_FILES['image']['name'];
-        $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-        $fileType = mime_content_type($tmpFile);
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
-
-        if (in_array($fileType, $allowedTypes) && in_array($fileExt, $allowedExts)) {
-            $uniqueName = uniqid('img_', true) . '.' . $fileExt;
-            $uploadFile = $uploadDir . $uniqueName;
-            $webPath = $webPathBase . $uniqueName;
-            if (move_uploaded_file($tmpFile, $uploadFile)) {
-                $image_url = $webPath;
-            } else {
-                echo "<p class='alert alert-danger'>Failed to upload image.</p>";
+    if (!empty($_POST['question']) && !empty($_POST['answer'])) {
+        try {
+            // Create uploads directory if it doesn't exist
+            $uploadDir = __DIR__ . '/uploads/';
+            if (!file_exists($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+                chmod($uploadDir, 0777);
             }
-        } else {
-            echo "<p class='alert alert-danger'>Invalid file type. Only JPG, PNG, and GIF are allowed.</p>";
+
+            // Handle image deletion on form submission
+            if (isset($_POST['delete_image']) && $_POST['delete_image'] === '1' && $existingQuestion['image_url']) {
+                if (file_exists(__DIR__ . '/' . $existingQuestion['image_url'])) {
+                    unlink(__DIR__ . '/' . $existingQuestion['image_url']);
+                }
+                $image_url = null;
+                $image_size = null;
+                $image_location = null;
+                $image_align = null;
+                $image_valign = null;
+            } else {
+                // Keep existing image settings if not uploading new image
+                $image_size = $_POST['image_size'] ?? $existingQuestion['image_size'];
+                $image_location = $_POST['image_location'] ?? $existingQuestion['image_location'];
+                $image_align = $_POST['image_align'] ?? $existingQuestion['image_align'];
+                $image_valign = $_POST['image_valign'] ?? $existingQuestion['image_valign'];
+            }
+
+            // Handle image upload if new image is provided
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $webPathBase = 'uploads/';
+                $tmpFile = $_FILES['image']['tmp_name'];
+                $originalName = $_FILES['image']['name'];
+                $fileExt = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+                $fileType = mime_content_type($tmpFile);
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                $allowedExts = ['jpg', 'jpeg', 'png', 'gif'];
+
+                if (in_array($fileType, $allowedTypes) && in_array($fileExt, $allowedExts)) {
+                    $uniqueName = uniqid('img_', true) . '.' . $fileExt;
+                    $uploadFile = $uploadDir . $uniqueName;
+                    $webPath = $webPathBase . $uniqueName;
+                    
+                    // Delete old image if exists
+                    if ($existingQuestion['image_url'] && file_exists(__DIR__ . '/' . $existingQuestion['image_url'])) {
+                        unlink(__DIR__ . '/' . $existingQuestion['image_url']);
+                    }
+                    
+                    if (move_uploaded_file($tmpFile, $uploadFile)) {
+                        $image_url = $webPath;
+                        // Keep the submitted image settings for new uploads
+                        $image_size = $_POST['image_size'];
+                        $image_location = $_POST['image_location'];
+                        $image_align = $_POST['image_align'];
+                        $image_valign = $_POST['image_valign'];
+                    } else {
+                        echo "<p class='alert alert-danger'>Failed to upload image.</p>";
+                    }
+                }
+            }
+
+            // Update question in database
+            $stmt = $pdo->prepare("
+                UPDATE questions 
+                SET ca_id = ?, text = ?, answer = ?, total_points = ?, difficulty = ?,
+                    image_url = ?, image_size = ?, image_location = ?, image_align = ?, image_valign = ?
+                WHERE qu_id = ?
+            ");
+            $stmt->execute([
+                $ca_id,
+                $_POST['question'],
+                $_POST['answer'],
+                $_POST['points'],
+                $_POST['difficulty'],
+                $image_url,
+                $image_size,
+                $image_location,
+                $image_align,
+                $image_valign,
+                $questionId
+            ]);
+            echo "<p class='alert alert-success'>Question updated successfully!</p>";
+
+            // Refresh page to show updated data
+            header("Location: edit-question.php?id=" . $questionId);
+            exit;
+        } catch (Exception $e) {
+            echo "<p class='alert alert-danger'>Error updating question: " . $e->getMessage() . "</p>";
         }
-    }
-
-    // Fix: Use $question values as fallback for all fields, not just text/answer
-    if ($ca_id && $qu_id && strlen($text) > 0 && strlen($answer) > 0) {
-        $updateStmt = $pdo->prepare("UPDATE matteprovgenerator.questions SET ca_id = ?, qu_id = ?, text = ?, answer = ?, total_points = ?, image_url = ?, image_size = ?, image_location = ? WHERE qu_id = ?");
-        $updateStmt->execute([
-            $ca_id, $qu_id, $text, $answer, $total_points, $image_url, 
-            $image_url ? $image_size : null,
-            $image_url ? $image_location : null,
-            $questionId
-        ]);
-
-        header("Location: assignments.php?course_id={$_POST['course_id']}&ca_id={$ca_id}");
-        exit;
     } else {
-        echo "<p class='alert alert-warning'>Fyll i alla fält korrekt.</p>";
+        echo "<p class='alert alert-warning'>Please fill in all required fields.</p>";
     }
 }
-
-// Determine the previous page
-$previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH)) : '';
 ?>
 
 <style>
+/* Clean up main layout */
+.page-centered-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 16px;
+}
+
+/* Preview styling to match single-test */
+.preview-panel {
+    background: white;
+    padding: 2rem;
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.preview-page {
+    width: 100%;
+    background: white;
+}
+
+.preview-content {
+    font-size: 11pt;
+    line-height: 1.6;
+}
+
+/* Question preview styling */
+.question-preview-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.question-preview-item {
+    margin-bottom: 2em;
+}
+
+.question-preview-points {
+    text-align: right;
+    margin-top: 0.5rem;
+    font-weight: bold;
+    color: #666;
+}
+
+/* Sidebar styles */
 #sidebarColumn {
     position: fixed;
     top: 0;
@@ -110,18 +211,11 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
     transform: translateX(0);
     opacity: 1;
 }
-#mainColumn {
-    transition: none;
-}
-.page-centered-container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 32px 16px 32px 16px;
-}
-/* Sidebar toggle button styling */
+
+/* Toggle button styling */
 #toggleSidebar {
     position: fixed;
-    top: 38%; /* Move above the vertical center */
+    top: 38%;
     left: 0;
     z-index: 2100;
     border-radius: 50%;
@@ -219,94 +313,444 @@ $previousPage = isset($_SERVER['HTTP_REFERER']) ? basename(parse_url($_SERVER['H
 <div class="container-fluid page-centered-container">
     <div class="row" id="contentRow">
         <!-- Sidebar -->
-        <div class="col-md ps-0" id="sidebarColumn">
-            <?php
-            // Set $currentPage to previous page if not a sidebar page
-            $sidebarPages = [
-                'dashboard.php',
-                'user-management.php',
-                'test-list.php',
-                'assignments.php',
-                'add-question.php',
-                'add-category.php',
-                'add-course.php',
-                'create-user.php',
-                // add other sidebar-linked pages here
-            ];
-            $currentPage = in_array(basename($_SERVER['PHP_SELF']), $sidebarPages)
-                ? basename($_SERVER['PHP_SELF'])
-                : $previousPage;
-            require_once "sidebar.php";
-            ?>
+        <div class="col-md-3 ps-0" id="sidebarColumn">
+            <?php require_once "sidebar.php"; ?>
         </div>
-        <!-- Main content -->
-        <div class="col-md" id="mainColumn">
-            <div class="container py-5">
-                <h1 class="page-title">Redigera Fråga</h1>
+        <!-- Main Content -->
+        <div class="col-md-9" id="mainColumn">
+            <div class="card shadow-lg">
+                <div class="card-header">
+                    <h2 class="mb-0">Redigera fråga</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Form Section -->
+                        <div class="col-md-6">
+                            <form method="POST" enctype="multipart/form-data" id="questionForm">
+                                <div class="mb-3">
+                                    <label for="course" class="form-label">Kurs:</label>
+                                    <select name="co_id" id="course" class="form-control" onchange="filterCategories()">
+                                        <option value="">Välj en kurs</option>
+                                        <?php foreach ($courses as $course): ?>
+                                            <option value="<?= $course['co_id']; ?>" <?= $course['co_id'] == $co_id ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($course['co_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-                <form method="post" enctype="multipart/form-data">
-                    <div class="form-group mb-3">
-                        <label for="category">Kategori:</label>
-                        <select name="ca_id" id="category" class="form-control">
-                            <?php foreach ($categories as $category): ?>
-                                <option value="<?= $category['ca_id']; ?>" <?= $category['ca_id'] == $question['ca_id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($category['ca_name']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Kategori:</label>
+                                    <select name="ca_id" id="category" class="form-control">
+                                        <option value="">Välj en kategori</option>
+                                        <?php foreach ($categories as $category): ?>
+                                            <option value="<?= $category['ca_id']; ?>" data-course="<?= $category['ca_co_fk']; ?>" <?= $category['ca_id'] == $ca_id ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($category['ca_name']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
 
-                    <div class="form-group mb-3">
-                        <label for="question">Fråga:</label>
-                        <textarea name="question" id="question" class="form-control"><?= htmlspecialchars($prefillText); ?></textarea>
-                    </div>
+                                <div class="mb-4">
+                                    <label for="question" class="form-label">Fråga:</label>
+                                    <textarea name="question" id="question"><?= htmlspecialchars($question) ?></textarea>
+                                </div>
 
-                    <div class="form-group mb-3">
-                        <label for="answer">Svar:</label>
-                        <textarea name="answer" id="answer" class="form-control"><?= htmlspecialchars($prefillAnswer); ?></textarea>
-                    </div>
+                                <div class="mb-4">
+                                    <label for="answer" class="form-label">Svar:</label>
+                                    <textarea name="answer" id="answer"><?= htmlspecialchars($answer) ?></textarea>
+                                </div>
 
-                    <div class="form-group mb-3">
-                        <label for="total_points">Poäng:</label>
-                        <input type="number" name="total_points" id="total_points" class="form-control" min="0" step="1" value="<?= htmlspecialchars($question['total_points']); ?>" required>
-                    </div>
+                                <div class="mb-4">
+                                    <label for="image" class="form-label">Bild (valfritt):</label>
+                                    <input type="file" name="image" id="image" class="form-control" accept="image/*">
+                                    <?php if ($image_url): ?>
+                                        <div class="mt-2">
+                                            <img src="<?= htmlspecialchars($image_url) ?>" alt="Current image" style="max-width: 200px; max-height: 100px;">
+                                            <button type="button" class="btn btn-warning btn-sm ms-2" onclick="markImageForDeletion()">
+                                                <i class="fas fa-eye-slash"></i> Dölj bild
+                                            </button>
+                                            <input type="hidden" name="delete_image" id="delete_image" value="0">
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <div class="image-controls mt-3" id="imageControls" style="display:none;">
+                                        <!-- Location buttons -->
+                                        <div class="btn-group w-100 mb-3">
+                                            <button type="button" class="btn btn-outline-primary location-btn <?= $image_location === '2' ? 'active' : '' ?>" data-location="2">
+                                                <i class="fas fa-arrow-left"></i> Vänster
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary location-btn <?= $image_location === '1' ? 'active' : '' ?>" data-location="1">
+                                                Höger <i class="fas fa-arrow-right"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary location-btn <?= $image_location === '3' ? 'active' : '' ?>" data-location="3">
+                                                <i class="fas fa-arrow-up"></i> Över
+                                            </button>
+                                            <button type="button" class="btn btn-outline-primary location-btn <?= $image_location === '4' ? 'active' : '' ?>" data-location="4">
+                                                Under <i class="fas fa-arrow-down"></i>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="image_location" id="image_location" value="<?= htmlspecialchars($image_location) ?>">
 
-                    <div class="form-group mb-3">
-                        <label for="image">Bild:</label>
-                        <?php if (!empty($question['image_url'])): ?>
-                            <div class="image-preview">
-                                <img src="<?= htmlspecialchars($question['image_url']); ?>" alt="Question Image" class="img-fluid">
+                                        <!-- Width controls - always shown -->
+                                        <div id="widthControl" class="mb-3">
+                                            <label class="form-label d-flex justify-content-between">
+                                                Bildbredd: <span id="sizeValue">50%</span>
+                                            </label>
+                                            <input type="range" class="form-range" name="image_size" id="image_size" 
+                                                   min="10" max="50" step="5" value="50">
+                                        </div>
+
+                                        <!-- Vertical alignment for left/right -->
+                                        <div id="verticalAlignControls" class="mb-3" style="display:none;">
+                                            <label class="form-label">Vertikal justering:</label>
+                                            <div class="btn-group w-100">
+                                                <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="flex-start">
+                                                    <i class="fas fa-arrow-up"></i> Topp
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary valign-btn active" data-valign="center">
+                                                    <i class="fas fa-arrows-alt-v"></i> Mitten
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="flex-end">
+                                                    <i class="fas fa-arrow-down"></i> Botten
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Horizontal alignment for top/bottom -->
+                                        <div id="alignmentControls" class="mb-3" style="display:none;">
+                                            <label class="form-label">Justering:</label>
+                                            <div class="btn-group w-100">
+                                                <button type="button" class="btn btn-outline-secondary align-btn" data-align="flex-start">
+                                                    <i class="fas fa-align-left"></i> Vänster
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary align-btn active" data-align="center">
+                                                    <i class="fas fa-align-center"></i> Mitten
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary align-btn" data-align="flex-end">
+                                                    <i class="fas fa-align-right"></i> Höger
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" name="image_align" id="image_align" value="<?= htmlspecialchars($image_align ?: 'center') ?>">
+                                        <input type="hidden" name="image_valign" id="image_valign" value="<?= htmlspecialchars($image_valign ?: 'center') ?>">
+                                    </div>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-6">
+                                        <label for="points" class="form-label">Poäng:</label>
+                                        <input type="number" name="points" id="points" class="form-control" value="<?= htmlspecialchars($points) ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="difficulty" class="form-label">Svårighetsgrad (1-6):</label>
+                                        <input type="number" name="difficulty" id="difficulty" min="1" max="6" class="form-control" value="<?= htmlspecialchars($difficulty) ?>">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-success">Spara ändringar</button>
+                            </form>
+                        </div>
+
+                        <!-- Preview Section -->
+                        <div class="col-md-6">
+                            <div class="preview-panel">
+                                <div class="preview-page">
+                                    <div class="question-preview-header">
+                                        <div>
+                                            <strong>Test Preview</strong><br>
+                                            <strong>Namn:</strong> __________________
+                                        </div>
+                                        <div>
+                                            <strong>Fråga:</strong> 1<br>
+                                            <strong>Poäng:</strong> <span id="previewPoints">0</span>p
+                                        </div>
+                                    </div>
+                                    <div class="question-preview-item">
+                                        <div><strong>Fråga 1:</strong></div>
+                                        <div id="questionPreview" class="preview-content"></div>
+                                        <div class="question-preview-points">_____/<span class="points-value">0</span>p</div>
+                                    </div>
+                                </div>
                             </div>
-                        <?php endif; ?>
-                        <input type="file" name="image" id="image" class="form-control">
+                        </div>
                     </div>
-                    <div class="form-group mb-3">
-                        <label for="image_size">Bildstorlek (% av container):</label>
-                        <input type="number" name="image_size" id="image_size" class="form-control" min="1" max="100" value="<?= htmlspecialchars($question['image_size'] ?? '') ?>">
-                        <small class="form-text text-muted">Ange en procentsats, t.ex. 25 för 25%.</small>
-                    </div>
-                    <div class="form-group mb-3">
-                        <label for="image_location">Bildens placering:</label>
-                        <select name="image_location" id="image_location" class="form-control">
-                            <option value="">Välj placering</option>
-                            <option value="1" <?= ($question['image_location'] ?? '') == '1' ? 'selected' : '' ?>>Höger om frågan</option>
-                            <option value="2" <?= ($question['image_location'] ?? '') == '2' ? 'selected' : '' ?>>Vänster om frågan</option>
-                            <option value="3" <?= ($question['image_location'] ?? '') == '3' ? 'selected' : '' ?>>Ovanför frågan</option>
-                            <option value="4" <?= ($question['image_location'] ?? '') == '4' ? 'selected' : '' ?>>Under frågan</option>
-                        </select>
-                        <small class="form-text text-muted">
-                            1 = Höger, 2 = Vänster, 3 = Ovanför, 4 = Under
-                        </small>
-                    </div>
-
-                    <input type="hidden" name="course_id" value="<?= $_GET['course_id'] ?? 0 ?>">
-
-                    <button type="submit" class="btn btn-success">Spara ändringar</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- CKEditor -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<!-- MathJax -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<script>
+function filterCategories() {
+    const selectedCourse = document.getElementById('course').value;
+    const categoryOptions = document.querySelectorAll('#category option');
+    categoryOptions.forEach(option => {
+        option.style.display = option.dataset.course === selectedCourse || option.value === "" ? "block" : "none";
+    });
+    document.getElementById('category').value = "";
+}
+
+function replaceDifficulty(event, input) {
+    const allowedKeys = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab'];
+    if (!allowedKeys.includes(event.key) && !isNaN(event.key)) {
+        const newValue = parseInt(event.key, 10);
+        if (newValue >= 1 && newValue <= 6) {
+            input.value = newValue;
+        }
+        event.preventDefault();
+    }
+}
+
+let questionEditor, answerEditor;
+
+ClassicEditor
+    .create(document.querySelector('#question'), {
+        removePlugins: ['Markdown'],
+        toolbar: ['heading', '|', 'bold', 'italic', '|', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
+    })
+    .then(editor => {
+        questionEditor = editor;
+        editor.model.document.on('change:data', () => {
+            updatePreview();
+        });
+        // Only run initial preview after editor is ready
+        updatePreview();
+    })
+    .catch(error => { console.error(error); });
+
+ClassicEditor
+    .create(document.querySelector('#answer'), {
+        removePlugins: ['Markdown'],
+        toolbar: ['heading', '|', 'bold', 'italic', '|', 'bulletedList', 'numberedList', '|', 'undo', 'redo']
+    })
+    .then(editor => {
+        answerEditor = editor;
+    })
+    .catch(error => { console.error(error); });
+
+// Show/hide image controls based on image presence
+function updateImageControls() {
+    const controls = document.getElementById('imageControls');
+    const imageInput = document.getElementById('image');
+    const existingImage = '<?= $image_url ?>';
+    
+    if ((imageInput.files && imageInput.files[0]) || existingImage) {
+        controls.style.display = 'block';
+    } else {
+        controls.style.display = 'none';
+    }
+}
+
+// Handle image input changes
+document.getElementById('image').addEventListener('change', function() {
+    updateImageControls();
+    updatePreview();
+});
+
+// Initialize image controls and settings
+document.addEventListener('DOMContentLoaded', function() {
+    const existingImage = '<?= $image_url ?>';
+    const location = '<?= $image_location ?>';
+    const size = '<?= $image_size ?>';
+    const align = '<?= $image_align ?>';
+    const valign = '<?= $image_valign ?>';
+    
+    // Update controls visibility
+    updateImageControls();
+    
+    // Set image location if exists
+    if (location) {
+        const locationBtn = document.querySelector(`.location-btn[data-location="${location}"]`);
+        if (locationBtn) {
+            locationBtn.click();
+        }
+        document.getElementById('image_location').value = location;
+    }
+    
+    // Set image size
+    if (size) {
+        document.getElementById('image_size').value = size;
+        document.getElementById('sizeValue').textContent = size + '%';
+    }
+    
+    // Setup alignment controls based on location
+    if (location) {
+        const isHorizontal = location === '1' || location === '2';
+        document.getElementById('alignmentControls').style.display = isHorizontal ? 'none' : 'block';
+        document.getElementById('verticalAlignControls').style.display = isHorizontal ? 'block' : 'none';
+        
+        // Set alignment buttons
+        if (isHorizontal) {
+            const valignBtn = document.querySelector(`.valign-btn[data-valign="${valign || 'center'}"]`);
+            if (valignBtn) {
+                document.querySelectorAll('.valign-btn').forEach(b => b.classList.remove('active'));
+                valignBtn.classList.add('active');
+                document.getElementById('image_valign').value = valign || 'center';
+            }
+        } else {
+            const alignBtn = document.querySelector(`.align-btn[data-align="${align || 'center'}"]`);
+            if (alignBtn) {
+                document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                alignBtn.classList.add('active');
+                document.getElementById('image_align').value = align || 'center';
+            }
+        }
+    }
+    
+    // Reset delete_image value when page loads
+    if (document.getElementById('delete_image')) {
+        document.getElementById('delete_image').value = '0';
+    }
+});
+
+function markImageForDeletion() {
+    if (confirm('Är du säker på att du vill dölja bilden?')) {
+        document.getElementById('delete_image').value = '1';
+        // Hide image preview and controls but don't destroy data
+        document.querySelector('.mt-2').style.display = 'none';
+        document.getElementById('imageControls').style.display = 'none';
+        // Update preview without the image
+        updatePreview();
+    }
+}
+
+// Modify updatePreview to respect temporary image clearing
+function updatePreview() {
+    if (!questionEditor) return;
+    
+    const questionContent = questionEditor.getData();
+    const imageInput = document.getElementById('image');
+    const existingImage = '<?= $image_url ?>';
+    const isImageCleared = document.getElementById('delete_image')?.value === '1';
+    const imageLocation = document.getElementById('image_location').value;
+    const imageSize = document.getElementById('image_size').value;
+    const imageAlign = document.getElementById('image_align').value;
+    const imageValign = document.getElementById('image_valign').value;
+    
+    let imgSrc = '';
+    if (imageInput.files && imageInput.files[0]) {
+        imgSrc = URL.createObjectURL(imageInput.files[0]);
+    } else if (existingImage && !isImageCleared) {
+        imgSrc = existingImage;
+    }
+
+    let previewHtml = '';
+    if (imgSrc && imageLocation) {
+        if (imageLocation === '1' || imageLocation === '2') {
+            const questionWidth = 100 - parseInt(imageSize);
+            const flexStyle = `display:flex;align-items:${imageValign};gap:1em;margin:0;`;
+            const imgHtml = `<img src="${imgSrc}" style="width:100%;height:auto;">`;
+            
+            previewHtml = `<div style="${flexStyle}">
+                ${imageLocation === '2' 
+                    ? `<div style="width:${imageSize}%;">${imgHtml}</div><div style="width:${questionWidth}%;">${questionContent}</div>`
+                    : `<div style="width:${questionWidth}%;">${questionContent}</div><div style="width:${imageSize}%;">${imgHtml}</div>`}
+            </div>`;
+        } else {
+            const margin = imageAlign === 'center' ? '0 auto' : 
+                          imageAlign === 'flex-end' ? '0 0 0 auto' : '0';
+            const imgStyle = `width:${imageSize}%;margin:${margin};display:block;`;
+            
+            previewHtml = `<div>
+                ${imageLocation === '3' ? `<img src="${imgSrc}" style="${imgStyle}">` : ''}
+                <div>${questionContent}</div>
+                ${imageLocation === '4' ? `<img src="${imgSrc}" style="${imgStyle}">` : ''}
+            </div>`;
+        }
+    } else {
+        previewHtml = questionContent;
+    }
+
+    document.getElementById('questionPreview').innerHTML = previewHtml;
+    if (window.MathJax) {
+        MathJax.typesetPromise([document.getElementById('questionPreview')]);
+    }
+}
+
+// Update location button handler - modify this section
+document.querySelectorAll('.location-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.location-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        const location = this.dataset.location;
+        const previousLocation = document.getElementById('image_location').value;
+        document.getElementById('image_location').value = location;
+        
+        const isHorizontal = location === '1' || location === '2';
+        const wasHorizontal = previousLocation === '1' || previousLocation === '2';
+        const sizeInput = document.getElementById('image_size');
+        const currentSize = parseInt(sizeInput.value);
+        
+        document.getElementById('alignmentControls').style.display = isHorizontal ? 'none' : 'block';
+        document.getElementById('verticalAlignControls').style.display = isHorizontal ? 'block' : 'none';
+        
+        // Update max width based on position
+        sizeInput.max = isHorizontal ? '50' : '100';
+        if (currentSize > 50 && isHorizontal) {
+            sizeInput.value = '50';
+            document.getElementById('sizeValue').textContent = '50%';
+        }
+        
+        // Only reset alignment if switching between horizontal and vertical layouts
+        if (isHorizontal !== wasHorizontal) {
+            if (isHorizontal) {
+                document.getElementById('image_valign').value = 'center';
+                document.querySelectorAll('.valign-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.valign-btn[data-valign="center"]').classList.add('active');
+            } else {
+                document.getElementById('image_align').value = 'center';
+                document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.align-btn[data-align="center"]').classList.add('active');
+            }
+        }
+        
+        updatePreview();
+    });
+});
+
+// Update points in preview when changed
+document.getElementById('points').addEventListener('input', function() {
+    const points = this.value || '0';
+    document.getElementById('previewPoints').textContent = points;
+    document.querySelector('.points-value').textContent = points;
+});
+
+// Add event handlers for alignment buttons
+document.querySelectorAll('.align-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('image_align').value = this.dataset.align;
+        updatePreview();
+    });
+});
+
+document.querySelectorAll('.valign-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.valign-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('image_valign').value = this.dataset.valign;
+        updatePreview();
+    });
+});
+
+// Fix image size handler
+document.getElementById('image_size').addEventListener('input', function() {
+    const size = this.value;
+    document.getElementById('sizeValue').textContent = size + '%';
+    updatePreview();
+});
+
+// Initial preview
+updatePreview();
+</script>
 
 <script>
 const sidebar = document.getElementById('sidebarColumn');
@@ -344,49 +788,6 @@ overlay.addEventListener('click', function () {
 });
 
 hideSidebar();
-</script>
-
-<!-- Import CKEditor and delay init to fix disappearing bug -->
-<script type="importmap">
-{
-    "imports": {
-        "ckeditor5": "./ckeditor5/ckeditor5.js",
-        "ckeditor5/": "./ckeditor5/"
-    }
-}
-</script>
-<script type="module" src="./main.js"></script>
-<script>
-    // Delay CKEditor initialization to ensure textareas are visible
-    setTimeout(() => {
-        if (typeof window.initCkEditor === 'function') {
-            window.initCkEditor();
-        }
-    }, 100);
-</script>
-
-<!-- CKEditor -->
-<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
-<script>
-let questionEditor, answerEditor;
-ClassicEditor
-    .create(document.querySelector('#question'))
-    .then(editor => { questionEditor = editor; })
-    .catch(error => { console.error(error); });
-
-ClassicEditor
-    .create(document.querySelector('#answer'))
-    .then(editor => { answerEditor = editor; })
-    .catch(error => { console.error(error); });
-
-// Optional: If you want to strip HTML tags before submitting (client-side as well)
-document.querySelector('form').addEventListener('submit', function(e) {
-    // Get plain text from CKEditor before submit
-    if (questionEditor && answerEditor) {
-        document.querySelector('#question').value = questionEditor.getData().replace(/<[^>]+>/g, '').trim();
-        document.querySelector('#answer').value = answerEditor.getData().replace(/<[^>]+>/g, '').trim();
-    }
-});
 </script>
 
 <?php require_once "include/footer.php"; ?>

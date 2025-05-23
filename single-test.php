@@ -59,7 +59,7 @@ if (isset($_GET['exid'])) {
     $test = $testDetails->fetch(PDO::FETCH_ASSOC);
 
     $questionsQuery = $pdo->prepare("
-        SELECT q.text, q.answer, q.total_points, q.image_url, q.image_size, q.image_location, q.image_align
+        SELECT q.text, q.answer, q.total_points, q.image_url, q.image_size, q.image_location, q.image_align, q.image_valign
         FROM matteprovgenerator.exam_questions eq
         INNER JOIN matteprovgenerator.questions q ON eq.qu_id = q.qu_id
         WHERE eq.ex_id = :testId
@@ -82,19 +82,23 @@ $currentPage = 'test-list.php';
     <meta charset="UTF-8">
     <title>Test Preview</title>
 
-    <!-- MathJax -->
+    <!-- MathJax Configuration -->
     <script>
-        window.MathJax = {
+        MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
             },
-            svg: { fontCache: 'global' }
+            svg: {
+                fontCache: 'global'
+            }
         };
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-k6RqeWeci5ZR/Lv4MR0sA0FfDOM8V0y5z5l5Z5l5Z5l5Z5l5Z5l5Z5l5Z5Z5" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" 
+          integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
         body {
@@ -337,17 +341,15 @@ $currentPage = 'test-list.php';
                 margin: 0 !important;
             }
 
-            /* Add more space between questions for handwriting */
+            /* Remove extra space between questions for handwriting */
             .test-preview-left-panel .question-item {
-                margin-bottom: 10em !important;
-                min-height: 5em;
+                margin-bottom: 1em !important;
+                min-height: auto;
                 page-break-inside: avoid;
                 break-inside: avoid;
-                orphans: 1;
-                widows: 1;
             }
             @page {
-                margin-top: 6cm;
+                margin-top: 2cm;
             }
             @page :first {
                 margin-top: 2cm;
@@ -487,19 +489,18 @@ $currentPage = 'test-list.php';
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2rem;
-            padding: 2rem;
+            gap: 1rem;
+            padding: 1rem;
             flex-wrap: wrap;
         }
         .test-preview-left-panel {
             background-color: white;
             width: 794px; /* A4 width */
-            min-height: 1123px; /* A4 height */
-            padding: 2rem;
+            padding: 1.5rem;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border: 1px solid #ccc;
             border-radius: 6px;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
         .test-preview-right-panel {
             width: 100%;
@@ -629,54 +630,68 @@ $currentPage = 'test-list.php';
 
                             <?php if (!empty($questions)): ?>
                                 <?php foreach ($questions as $index => $question): ?>
-                                    <div class="question-item" style="margin-bottom:2em;">
-                                        <div><strong>Question <?= $index + 1 ?>:</strong></div>
-                                        <?php
-                                        // Prepare image HTML if present
-                                        $imgHtml = '';
-                                        if (!empty($question['image_url'])) {
-                                            $pageWidth = 794 - (2 * 40); // A4 width minus margins
-                                            $calculatedWidth = floor(($pageWidth * intval($question['image_size'])) / 100);
+                                    <div class="question-item" style="margin-bottom:1em;">
+                                        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.5em;">
+                                            <strong>Question <?= $index + 1 ?>:</strong>
+                                            <span class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</span>
+                                        </div>
+                                        <div class="question-content">
+                                            <?php 
+                                            $questionContent = $question['text'];
                                             
-                                            $imgStyle = ($question['image_location'] === '3' || $question['image_location'] === '4') 
-                                                ? "width:{$calculatedWidth}px;height:{$question['image_height']}px;object-fit:contain;" 
-                                                : "width:{$calculatedWidth}px;height:auto;";
-                                            
-                                            $imgHtml = "<img src='{$question['image_url']}' style='{$imgStyle}'>";
-                                            $imgContainerStyle = "text-align:{$question['image_align']};";
-
-                                            if ($question['image_location'] === '1' || $question['image_location'] === '2') {
-                                                $flexStyle = "display:flex;align-items:flex-start;gap:1em;";
-                                                echo "<div style='{$flexStyle}'>";
-                                                if ($question['image_location'] === '2') { // Left
-                                                    echo "<div style='flex:{$question['image_size']};{$imgContainerStyle}'>{$imgHtml}</div>";
-                                                    echo "<div style='flex:" . (100 - intval($question['image_size'])) . "'>" . $question['text'] . "</div>";
-                                                } else { // Right
-                                                    echo "<div style='flex:" . (100 - intval($question['image_size'])) . "'>" . $question['text'] . "</div>";
-                                                    echo "<div style='flex:{$question['image_size']};{$imgContainerStyle}'>{$imgHtml}</div>";
+                                            if ($question['image_url']) {
+                                                $imageUrl = htmlspecialchars($question['image_url']);
+                                                $imageSize = $question['image_size'] ?? '50';
+                                                $imageAlign = $question['image_align'] ?? 'flex-start';
+                                                $imageValign = $question['image_valign'] ?? 'flex-start';
+                                                
+                                                // Handle image positioning
+                                                switch($question['image_location']) {
+                                                    case '1': // Right
+                                                        $questionWidth = 100 - intval($imageSize);
+                                                        echo "<div style='display:flex;align-items:{$imageValign};gap:1em;margin:0;'>";
+                                                        echo "<div style='width:{$questionWidth}%;'>{$questionContent}</div>";
+                                                        echo "<div style='width:{$imageSize}%;'><img src='{$imageUrl}' style='width:100%;height:auto;'></div>";
+                                                        echo "</div>";
+                                                        break;
+                                                        
+                                                    case '2': // Left
+                                                        $questionWidth = 100 - intval($imageSize);
+                                                        echo "<div style='display:flex;align-items:{$imageValign};gap:1em;margin:0;'>";
+                                                        echo "<div style='width:{$imageSize}%;'><img src='{$imageUrl}' style='width:100%;height:auto;'></div>";
+                                                        echo "<div style='width:{$questionWidth}%;'>{$questionContent}</div>";
+                                                        echo "</div>";
+                                                        break;
+                                                        
+                                                    case '3': // Top
+                                                        $alignStyle = $imageAlign === 'flex-start' ? 'margin-right:auto;' : 
+                                                                    ($imageAlign === 'flex-end' ? 'margin-left:auto;' : 'margin:0 auto;');
+                                                        echo "<div>";
+                                                        echo "<img src='{$imageUrl}' style='width:{$imageSize}%;{$alignStyle}display:block;'>";
+                                                        echo "<div style='margin-top:1em;'>{$questionContent}</div>";
+                                                        echo "</div>";
+                                                        break;
+                                                        
+                                                    case '4': // Bottom
+                                                        $alignStyle = $imageAlign === 'flex-start' ? 'margin-right:auto;' : 
+                                                                    ($imageAlign === 'flex-end' ? 'margin-left:auto;' : 'margin:0 auto;');
+                                                        echo "<div>";
+                                                        echo "<div>{$questionContent}</div>";
+                                                        echo "<img src='{$imageUrl}' style='width:{$imageSize}%;{$alignStyle}display:block;margin-top:1em;'>";
+                                                        echo "</div>";
+                                                        break;
+                                                        
+                                                    default:
+                                                        echo $questionContent;
+                                                        echo "<div style='margin-top:1em;'>";
+                                                        echo "<img src='{$imageUrl}' style='max-width:100%;height:auto;'>";
+                                                        echo "</div>";
                                                 }
-                                                echo "</div>";
                                             } else {
-                                                if ($question['image_location'] === '3') { // Top
-                                                    echo "<div style='{$imgContainerStyle}'>{$imgHtml}</div>";
-                                                }
-                                                echo $question['text'];
-                                                if ($question['image_location'] === '4') { // Bottom
-                                                    echo "<div style='{$imgContainerStyle}'>{$imgHtml}</div>";
-                                                }
+                                                echo $questionContent;
                                             }
-                                        } else {
-                                            echo $question['text'];
-                                        }
-                                        ?>
-
-                                        <?php if (isset($imgHtml) && isset($question['image_location']) && $question['image_location'] === '4'): ?>
-                                            <div style="display:flex;justify-content:flex-end;margin-top:0.5em;">
-                                                <?= $imgHtml ?>
-                                            </div>
-                                        <?php endif; ?>
-
-                                        <div class="question-points">_____/<?= htmlspecialchars($question['total_points']) ?>p</div>
+                                            ?>
+                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             <?php else: ?>

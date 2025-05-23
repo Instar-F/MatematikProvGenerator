@@ -23,8 +23,10 @@ $difficulty = $_POST['difficulty'] ?? '';
 $ca_id = $_POST['ca_id'] ?? '';
 $co_id = $_POST['co_id'] ?? '';
 $image_url = null;
-$image_size = $_POST['image_size'] ?? '';
+$image_size = $_POST['image_size'] ?? '50';
 $image_location = $_POST['image_location'] ?? '';
+$image_align = $_POST['image_align'] ?? 'center';
+$image_valign = $_POST['image_valign'] ?? 'center';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -331,17 +333,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 Bildbredd: <span id="sizeValue">50%</span>
                                             </label>
                                             <input type="range" class="form-range" name="image_size" id="image_size" 
-                                                   min="10" max="100" step="5" value="50">
+                                                   min="10" max="50" step="5" value="50">
                                         </div>
 
                                         <!-- Vertical alignment for left/right -->
                                         <div id="verticalAlignControls" class="mb-3" style="display:none;">
                                             <label class="form-label">Vertikal justering:</label>
                                             <div class="btn-group w-100">
-                                                <button type="button" class="btn btn-outline-secondary valign-btn active" data-valign="flex-start">
+                                                <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="flex-start">
                                                     <i class="fas fa-arrow-up"></i> Topp
                                                 </button>
-                                                <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="center">
+                                                <button type="button" class="btn btn-outline-secondary valign-btn active" data-valign="center">
                                                     <i class="fas fa-arrows-alt-v"></i> Mitten
                                                 </button>
                                                 <button type="button" class="btn btn-outline-secondary valign-btn" data-valign="flex-end">
@@ -354,10 +356,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         <div id="alignmentControls" class="mb-3" style="display:none;">
                                             <label class="form-label">Justering:</label>
                                             <div class="btn-group w-100">
-                                                <button type="button" class="btn btn-outline-secondary align-btn active" data-align="flex-start">
+                                                <button type="button" class="btn btn-outline-secondary align-btn" data-align="flex-start">
                                                     <i class="fas fa-align-left"></i> Vänster
                                                 </button>
-                                                <button type="button" class="btn btn-outline-secondary align-btn" data-align="center">
+                                                <button type="button" class="btn btn-outline-secondary align-btn active" data-align="center">
                                                     <i class="fas fa-align-center"></i> Mitten
                                                 </button>
                                                 <button type="button" class="btn btn-outline-secondary align-btn" data-align="flex-end">
@@ -366,8 +368,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             </div>
                                         </div>
 
-                                        <input type="hidden" name="image_align" id="image_align" value="flex-start">
-                                        <input type="hidden" name="image_valign" id="image_valign" value="flex-start">
+                                        <input type="hidden" name="image_align" id="image_align" value="center">
+                                        <input type="hidden" name="image_valign" id="image_valign" value="center">
                                     </div>
                                 </div>
 
@@ -595,30 +597,35 @@ document.querySelectorAll('.location-btn').forEach(btn => {
         document.querySelectorAll('.location-btn').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         const location = this.dataset.location;
+        const previousLocation = document.getElementById('image_location').value;
         document.getElementById('image_location').value = location;
         
         const isHorizontal = location === '1' || location === '2';
+        const wasHorizontal = previousLocation === '1' || previousLocation === '2';
         const sizeInput = document.getElementById('image_size');
         const currentSize = parseInt(sizeInput.value);
         
         document.getElementById('alignmentControls').style.display = isHorizontal ? 'none' : 'block';
         document.getElementById('verticalAlignControls').style.display = isHorizontal ? 'block' : 'none';
         
-        // Update max width and adjust current value if needed
-        if (isHorizontal && currentSize > 50) {
-            sizeInput.max = '50';
+        // Update max width based on position
+        sizeInput.max = isHorizontal ? '50' : '100';
+        if (currentSize > 50 && isHorizontal) {
             sizeInput.value = '50';
             document.getElementById('sizeValue').textContent = '50%';
-        } else if (!isHorizontal && sizeInput.max === '50') {
-            sizeInput.max = '100';
-            // Keep the current value as it will be valid for vertical
         }
         
-        // Reset alignments
-        if (isHorizontal) {
-            document.querySelector('.valign-btn[data-valign="flex-start"]').click();
-        } else {
-            document.querySelector('.align-btn[data-align="flex-start"]').click();
+        // Only reset alignment if switching between horizontal and vertical layouts
+        if (isHorizontal !== wasHorizontal) {
+            if (isHorizontal) {
+                document.getElementById('image_valign').value = 'center';
+                document.querySelectorAll('.valign-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.valign-btn[data-valign="center"]').classList.add('active');
+            } else {
+                document.getElementById('image_align').value = 'center';
+                document.querySelectorAll('.align-btn').forEach(b => b.classList.remove('active'));
+                document.querySelector('.align-btn[data-align="center"]').classList.add('active');
+            }
         }
         
         updatePreview();
